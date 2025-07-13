@@ -7,7 +7,7 @@ A modern twist on 2048 — featuring arithmetic operations, base variations, end
 
 ##  Live Demo
 
-> Coming soon via [GitHub Pages](https://atac-helicopter.github.io/Fusion-Gird/)
+Play it here: [Fusion Grid on GitHub Pages](https://atac-helicopter.github.io/Fusion-Gird/)
 
 ##  Game Concept
 

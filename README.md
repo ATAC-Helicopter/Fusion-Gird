@@ -18,52 +18,44 @@ Fusion Grid reimagines 2048 by combining classic sliding mechanics with dynamic 
 - Merge tiles using visible operators
 - Reach 2048 to win — or continue in Endless Mode
 
-## 🧮 Game Rules
 
-### 🔢 Operator Merging
-- An operator tile (`+`, `−`, `×`, `÷`) merges with one adjacent tile in the direction of movement to form a result
-- The result is calculated using:
-  - `+` → A + B
-  - `−` → |A − B|
-  - `×` → A × B
-  - `÷` → A ÷ B (only if divisible evenly either way)
-- Only one merge per tile per move
-- Result is clamped to the range 
+## Game Rules (Updated)
 
-### 🧮 Tile Spawning
-- New tiles spawn with values `2` (90%) or `4` (10%) in random empty cells
+### Operator Merging
+- Operator tiles (`+`, `−`, `×`, `÷`) merge with one adjacent tile in the direction of movement to create a new result tile.
+- Results are calculated as:
+  - `+`: addition
+  - `−`: absolute difference
+  - `×`: multiplication
+  - `÷`: division (only if evenly divisible)
+- Only one merge per tile per move.
+- Weak merges below a dynamic threshold trigger warnings or penalties.
 
-### 🎮 Movement & Board
-- 4×4 grid with classic swipe mechanics
-- Tiles move as far as possible in the selected direction
-- No diagonal movement or chain reactions
+### Tile Spawning
+- New tiles spawn as either 2 (90%) or 4 (10%) in random empty cells.
 
-### 📈 Scoring
-- Score increases by the value of the merged result
-- Subtraction and division **decrease score** by the result instead
-- Score cannot fall below 0
-- High score is saved to local storage
+### Movement & Board
+- Classic 4×4 grid.
+- Tiles move fully in the chosen direction; no diagonal moves or chain reactions.
 
-### 🟡 Warnings & Penalties
-- Weak merges using `−` or `÷` that produce results below a dynamic threshold trigger a warning
-- You have 3 warnings total
-- After warnings are used, further weak merges deduct 10 moves from the move limit
-- Repeating violations causes **elimination**
+### Move Limit and Progression
+- Players have 180 moves by default (disabled in Endless Mode).
+- The minimum tile value required increases every 10 moves (starting at 8).
+- Failure to reach this threshold within a grace period results in elimination.
 
-### 🎯 Move Limit & Progression
-- You have **180 total moves** (only consumed when tiles successfully move or merge)
-- The minimum required tile value increases every 10 moves
-- If you fail to promote any tile to meet the threshold in time, the game ends
+### Warnings and Penalties
+- Weak merges below the threshold issue warnings (up to 3 allowed).
+- After warnings are used, further weak merges reduce the move limit by 10 moves.
+- Repeated offenses cause elimination (game over).
+- Warnings and penalties are disabled in Endless Mode.
 
-### 🏁 Win Condition
-- Win by creating a tile with value **2048** or higher
-- After winning, you can opt into **Endless Mode**
+### Win Condition
+- The player wins by creating a tile with a value between 2048 and 2500 inclusive.
+- After winning, Endless Mode can be enabled.
 
-### 🧠 AI Modes (Planned)
-Autoplay is under development. Planned modes include:
-- Random: selects a move at random
-- Smart: evaluates the best scoring option
-- Pattern: follows fixed directional logic
+### Endless Mode
+- Disables move limits, warnings, and penalties.
+- Can be started from the main menu or after winning.
 
 ## ✨ Features
 

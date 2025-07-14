@@ -60,10 +60,17 @@
       <button id="btn-quit">Quit</button>
     </div>
   </div>
-  <script>
-    document.getElementById('app').style.display = 'none';
-  </script>
-  <script type="module" src="game.js"></script>
-  <script type="module" src="mainMenu.js"></script>
+<script>
+  // Hide the game container initially
+  document.getElementById('app').style.display = 'none';
+</script>
+
+<script type="module" src="game.js"></script>
+<script type="module" src="mainMenu.js"></script>
+<script type="module" src="pause.js"></script>
+<script type="module">
+  import { setupInfoBox } from './ui.js';
+  setupInfoBox();
+</script>
 </body>
 </html>

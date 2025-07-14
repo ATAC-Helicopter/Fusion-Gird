@@ -24,7 +24,7 @@ let largestTile = 0;
 let thresholdCheckEnabled = false;
 let moveLimit = 180;
 let minTileThreshold = 8;
-
+let gameStartMoveIndex = 0;
 let warningsEnabled = true;
 let moveLimitEnabled = true;
 
@@ -38,19 +38,10 @@ let inputLock = false;
 window.onload = () => {
   setupDevModeUI(showEndBanner);
   setupGameUI();
-  // startGame(); ← REMOVED to prevent auto-start
   document.addEventListener('keydown', handleInput);
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      const menu = document.getElementById('pause-menu');
-      if (menu) {
-        const isVisible = menu.style.display === 'flex';
-        menu.style.display = isVisible ? 'none' : 'flex';
-        inputLock = !isVisible;
-      }
-    }
-  });
 };
+
+
 
 
 function startGame({ warningsEnabled: wEnabled = true, moveLimitEnabled: mEnabled = true } = {}) {
@@ -66,6 +57,11 @@ function startGame({ warningsEnabled: wEnabled = true, moveLimitEnabled: mEnable
   score = 0;
   largestTile = 0;
   moveIndex = 0;
+  const infoBox = document.getElementById('info-box');
+if (infoBox && infoBox.style.display === 'none') {
+  infoBox.style.display = 'block';
+}
+  gameStartMoveIndex = 0;
   thresholdCheckEnabled = false;
   weakMergeWarningsRemaining = warningsEnabled ? 3 : 0;
   document.getElementById('win-lose-banner')?.remove();
@@ -113,6 +109,7 @@ function handleInput(e) {
 
   if (moved) {
     console.log(`\n=== MOVE ${++moveIndex} ===`);
+    
     if (!inEndlessMode && moveIndex >= moveLimit) {
       const highest = Math.max(...tiles.map(t => t.value));
       if (highest < 2048) {
@@ -184,47 +181,48 @@ function move(dy, dx) {
 
           const currentMinThreshold = minTileThreshold + Math.floor(moveIndex / 10) * 8;
 
-          if (
-            warningsEnabled &&
-            moveLimitEnabled &&
-            !inEndlessMode &&
-            mergedBySubOrDiv &&
-            (typeof result !== 'number' || result < currentMinThreshold)
-          ) {
-            // Only allow warning if not in grace window (4 moves since last warning)
-            if (weakMergeWarningsRemaining > 0 && (moveIndex - lastWeakMergeTime > 3)) {
-              const shown = typeof result === 'number' ? result : 'invalid';
-              weakMergeWarningsRemaining--;
-              lastWeakMergeTime = moveIndex;
-              // Show permanent warning message in container
-              const warningMsg = document.getElementById('warning-msg');
-              if (warningMsg) {
-                const warningLine = document.createElement('div');
-                warningLine.style.background = '#fff3cd';
-                warningLine.style.borderRadius = '6px';
-                warningLine.style.padding = '6px 12px';
-                warningLine.style.marginTop = '6px';
-                warningLine.style.color = '#d32f2f';
-                warningLine.style.fontSize = '14px';
-                warningLine.style.fontWeight = '500';
-                warningLine.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-                warningLine.innerHTML = `⚠️ Weak merge – result ${shown} is below minimum ${currentMinThreshold}`;
-                warningMsg.appendChild(warningLine);
-                warningMsg.style.display = 'block';
-              }
-            } else if (weakMergeWarningsRemaining <= 0 || (moveIndex - lastWeakMergeTime <= 3)) {
-              if (!tile.penalized) {
-                moveLimit -= 10;
-                tile.penalized = true;
-                showPenaltyBanner();
-              } else {
-                const shown = typeof result === 'number' ? result : 'invalid';
-                showEndBanner(`Eliminated — Resulting tile too weak (${shown} < min)`, startGame);
-                inputLock = true;
-                return false;
-              }
-            }
-          }
+if (
+  warningsEnabled &&
+  moveLimitEnabled &&
+  !inEndlessMode &&
+  mergedBySubOrDiv &&
+  (typeof result !== 'number' || result < currentMinThreshold)
+) {
+  const shown = typeof result === 'number' ? result : 'invalid';
+
+  if (weakMergeWarningsRemaining > 0) {
+    if ((moveIndex - lastWeakMergeTime > 3)) {
+      weakMergeWarningsRemaining--;
+      lastWeakMergeTime = moveIndex;
+
+      const warningMsg = document.getElementById('warning-msg');
+      if (warningMsg) {
+        const warningLine = document.createElement('div');
+        warningLine.style.background = '#fff3cd';
+        warningLine.style.borderRadius = '6px';
+        warningLine.style.padding = '6px 12px';
+        warningLine.style.marginTop = '6px';
+        warningLine.style.color = '#d32f2f';
+        warningLine.style.fontSize = '14px';
+        warningLine.style.fontWeight = '500';
+        warningLine.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+        warningLine.innerHTML = `⚠️ Weak merge – result ${shown} is below minimum ${currentMinThreshold}`;
+        warningMsg.appendChild(warningLine);
+        warningMsg.style.display = 'block';
+      }
+    } // else: grace cooldown is in effect, but no penalty yet
+  } else {
+    if (!tile.penalized) {
+      moveLimit -= 10;
+      tile.penalized = true;
+      showPenaltyBanner();
+    } else {
+      showEndBanner(`Eliminated — Resulting tile too weak (${shown} < min)`, startGame);
+      inputLock = true;
+      return false;
+    }
+  }
+}
           if (result !== null) {
             tile.value = result;
             tile.op = null;
@@ -490,12 +488,14 @@ function drawTiles() {
 
 function checkGameEnd() {
   if (inEndlessMode) return;
-  const has2048 = tiles.some(t => t.value === 2048);
-  if (has2048) {
-    showEndBanner('You Win!', startGame);
-    inputLock = true;
-    return;
-  }
+  const winMin = 2048;
+const winMax = 2500;
+const hasWinningTile = tiles.some(t => t.value >= winMin && t.value <= winMax);
+if (hasWinningTile) {
+  showEndBanner('You Win!', startGame);
+  inputLock = true;
+  return;
+}
 
   const emptyExists = grid.some(t => t === null);
   if (emptyExists) return;
@@ -532,4 +532,8 @@ export function launchGame({ endlessMode = false, warningsEnabled = true, moveLi
   document.getElementById('main-menu').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   startGame({ warningsEnabled, moveLimitEnabled });
+}
+
+export function setInputLock(state) {
+  inputLock = state;
 }

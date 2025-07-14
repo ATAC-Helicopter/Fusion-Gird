@@ -2,9 +2,9 @@ import { applyOp } from './tileUtils.js';
 import { logEvent } from './devMode.js';
 
 export function checkScoreForOpPrompt(tiles, score, nextOpThresholdObj, operations, grid, gridSize) {
-  if (score >= nextOpThresholdObj.value) {
+  const randomChance = Math.random();
+  if (randomChance < 0.15) { // 15% chance to spawn op tile on each move
     assignRandomOpToTile(tiles, operations, grid, gridSize);
-    nextOpThresholdObj.value += 150;
   }
 }
 

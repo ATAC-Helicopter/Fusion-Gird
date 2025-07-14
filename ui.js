@@ -1,6 +1,3 @@
-
-
-
 export function setupGameUI(moveLimit = 180, minTileThreshold = 8) {
   const gridElement = document.getElementById('grid');
   const tileSize = 80;
@@ -218,4 +215,54 @@ export function showEndBanner(message, startGameCallback) {
   }
 
   document.body.appendChild(banner);
+}
+export function setupInfoBox() {
+  const button = document.createElement('div');
+  button.id = 'info-button';
+  button.style.position = 'fixed';
+  button.style.top = '50%';
+  button.style.left = '12px';
+  button.style.transform = 'translateY(-50%)';
+  button.style.zIndex = '1001';
+  button.style.cursor = 'pointer';
+  button.style.padding = '10px 14px';
+  button.style.border = 'none';
+  button.style.borderRadius = '8px';
+  button.style.background = '#555';
+  button.style.color = '#fff';
+  button.style.fontWeight = 'bold';
+  button.style.fontSize = '20px';
+  button.innerText = 'ⓘ';
+  document.body.appendChild(button);
+
+  const box = document.createElement('div');
+  box.id = 'info-box';
+  box.style.position = 'fixed';
+  box.style.top = '50%';
+  box.style.left = '60px';
+  box.style.transform = 'translateY(-50%)';
+  box.style.zIndex = '1000';
+  box.style.background = '#2b2b2b';
+  box.style.border = '1px solid #555';
+  box.style.borderRadius = '20px';
+  box.style.padding = '28px';
+  box.style.width = '420px';
+  box.style.boxShadow = '0 6px 14px rgba(0,0,0,0.4)';
+  box.style.display = 'none';
+  box.innerHTML = `
+  <h3 style="margin: 0 0 12px 0; color: #fff; font-size: 20px;">📘 Game Rules</h3>
+  <ul style="font-size: 16px; line-height: 1.9; padding-left: 18px; color: #ddd;">
+<li><strong style="color: #fff;">Objective:</strong> Reach a tile between 2048 and 2500 to win. Endless mode allows playing beyond.</li>    <li><strong style="color: #fff;">Normal Tiles:</strong> Merge when equal (e.g. 4 + 4 → 8).</li>
+    <li><strong style="color: #fff;">Operator Tiles (P):</strong> Merge with adjacent tiles using +, −, ×, ÷. Result must be between 2 and 4096.</li>
+    <li><strong style="color: #fff;">Move Limit:</strong> You have 180 moves. Exceeding it without reaching 2048 ends the game.</li>
+    <li><strong style="color: #fff;">Minimum Tile Rule:</strong> Every 10 moves increases the required tile value. Falling below this with − or ÷ can cause a warning.</li>
+    <li><strong style="color: #fff;">Warnings:</strong> You get 3 total. Triggered when weak merges occur under the threshold.</li>
+    <li><strong style="color: #fff;">Penalties:</strong> If warnings are exhausted, −10 moves or elimination may occur.</li>
+    <li><strong style="color: #fff;">Endless Mode:</strong> No move limit, penalties, or warnings. Play indefinitely.</li>
+  </ul>
+`;
+  document.body.appendChild(box);
+
+  button.onclick = () => {
+box.classList.toggle('visible');  };
 }

@@ -1,44 +1,81 @@
-
-
+import { setInputLock, launchGame } from './game.js';
+import { logEvent } from './devMode.js';
 
 let isPaused = false;
 
-function togglePauseMenu() {
-  const menu = document.getElementById('pause-menu');
-  if (!menu) return;
+function setPauseState(state) {
+  isPaused = state;
 
-  isPaused = !isPaused;
-  menu.style.display = isPaused ? 'flex' : 'none';
-  inputLock = isPaused;
+  const menu = document.getElementById('pause-menu');
+  if (menu) {
+    menu.style.display = isPaused ? 'flex' : 'none';
+  }
+
+  // Re-bind pause menu buttons every time menu is shown
+  if (isPaused) {
+    bindPauseMenuButtons();
+  }
+
+  setInputLock(isPaused);
+  document.body.classList.toggle('paused', isPaused);
+
+  if (isPaused) {
+    document.activeElement?.blur();
+  }
 }
 
-// Bind keyboard input
+function resumeGame() {
+  logEvent('[DEBUG] Resuming game');
+  setPauseState(false);
+}
+
+function pauseGame() {
+  logEvent('[DEBUG] Pausing game');
+  setPauseState(true);
+}
+
+function togglePause() {
+  logEvent(`[DEBUG] Toggling pause: ${!isPaused}`);
+  setPauseState(!isPaused);
+}
+
+function bindPauseMenuButtons() {
+  const continueBtn = document.getElementById('btn-continue');
+  if (continueBtn && !continueBtn.dataset.bound) {
+    continueBtn.addEventListener('click', () => {
+      logEvent('[DEBUG] Continue button clicked');
+      resumeGame();
+    });
+    continueBtn.dataset.bound = 'true';
+  }
+
+  const newGameBtn = document.getElementById('btn-newgame');
+  if (newGameBtn && !newGameBtn.dataset.bound) {
+    newGameBtn.addEventListener('click', () => {
+      logEvent('[DEBUG] New Game button clicked');
+      resumeGame();
+      launchGame();  // start fresh game immediately
+    });
+    newGameBtn.dataset.bound = 'true';
+  }
+
+  const quitBtn = document.getElementById('btn-quit');
+  if (quitBtn && !quitBtn.dataset.bound) {
+    quitBtn.addEventListener('click', () => {
+      logEvent('[DEBUG] Quit button clicked');
+      resumeGame();
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('main-menu').style.display = 'flex';
+    });
+    quitBtn.dataset.bound = 'true';
+  }
+}
+
+// Keyboard shortcut
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    togglePauseMenu();
+    togglePause();
   }
 });
 
-// Wire pause menu buttons
-window.addEventListener('DOMContentLoaded', () => {
-  const btnContinue = document.getElementById('btn-continue');
-  const btnNewGame = document.getElementById('btn-newgame');
-  const btnQuit = document.getElementById('btn-quit');
-
-  if (btnContinue) {
-    btnContinue.onclick = () => togglePauseMenu();
-  }
-
-  if (btnNewGame) {
-    btnNewGame.onclick = () => {
-      togglePauseMenu();
-      startGame();
-    };
-  }
-
-  if (btnQuit) {
-    btnQuit.onclick = () => {
-      location.reload(); // or redirect to main menu if implemented
-    };
-  }
-});
+export { isPaused, pauseGame, resumeGame, togglePause };

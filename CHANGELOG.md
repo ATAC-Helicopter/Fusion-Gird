@@ -42,5 +42,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Fixed initialization and update logic for move and warning counters.
 - Addressed UI spacing issues under the title bar.
 
+
 ### Removed
 - Developer mode toggle from the settings screen (now always accessible in-game).
+
+
+## [1.2.0] - 2025-07-15
+
+### Added
+- Configurable win condition allowing victory for tiles within a value range (e.g., 2048–2500).  
+- New info panel (“game key”) explaining tile meanings, rules, and win/lose conditions with toggle control.  
+- Theme selector integrated across all views supporting Light, Dark, and System modes.  
+- Persistent, styled warning display replacing popup warnings for better clarity and UI layout.  
+- Complete pause menu rewrite with robust event binding; full input locking while paused.  
+- Pause menu buttons fully functional with correct behaviors: Continue resumes gameplay, New Game starts fresh immediately, Quit returns cleanly to the main menu.  
+- Refactored pause and UI code for better separation of concerns and maintainability.
+
+### Changed
+- Penalty and warning system updated for proper live visual feedback and integrated pause behavior.  
+- Tile styling improved for better contrast and consistent glow effects across themes.  
+- UI layout refined with repositioned warning panels and enhanced spacing under the game title.  
+- Removed legacy pause menu escape key handling in favor of the rewritten pause system.
+
+### Fixed
+- Pause menu continue button reliably hides pause UI and resumes gameplay.  
+- Fixed light mode OP tile styling and warning counter synchronization.  
+- Added debug logs for pause actions and button clicks, with event binding retry logic for stability.

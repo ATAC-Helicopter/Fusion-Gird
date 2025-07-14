@@ -1,5 +1,3 @@
-
-
 # 🛣 Fusion Grid Roadmap
 
 ## ✅ Completed
@@ -8,6 +6,12 @@
 - Tooltip tile preview
 - Endless mode
 - Dev testing buttons (simulate win/lose)
+- Win condition tweak: configurable tile value range for victory
+- Penalty and warning system improvements with visual feedback and pause integration
+- UI/UX overhaul including theme selector, OP tile redesign, warning display revamp, and layout improvements
+- Info panel (game key) added with toggleable visibility
+- Complete pause system rewrite with button improvements and input locking
+- Debug enhancements with robust logging and event binding fixes
 
 ## 🚧 In Progress
 - AI autoplay: random, smart, pattern-based
@@ -20,3 +24,12 @@
 - Music/sound effects
 - Color themes
 - Multiplayer or challenge modes
+- Dynamic backgrounds  
+- AI opponent with varying difficulty  
+- Leaderboards and achievements  
+- Seasonal or event-based themes  
+- Customizable tile sets and UI skins  
+- Puzzle generator with daily challenges  
+- Accessibility options (colorblind modes, font size)  
+- Tutorial mode with step-by-step guidance  
+- Social sharing and multiplayer races  

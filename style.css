@@ -6,7 +6,7 @@ body {
 }
 
 #game {
-  margin: 0 auto;
+  margin: 12px auto 0;
   width: fit-content;
 }
 
@@ -61,7 +61,7 @@ body {
 }
 
 #game {
-  margin: 0 auto;
+  margin: 12px auto 0;
   width: fit-content;
 }
 
@@ -81,7 +81,28 @@ body {
 #score {
   font-size: 24px;
   font-weight: bold;
-  margin-top: 10px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* Tracker panel for Moves and Min Tile */
+#tracker-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 18px;
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  margin: 12px 0;
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="light"] #tracker-panel {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 
@@ -128,8 +149,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 40px;
-  max-width: 1200px;
+  gap: 24px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
@@ -175,26 +196,77 @@ body {
   justify-content: center;
   align-items: center;
   position: relative;
-  border: 2px solid #fff68f;
+  border: 2px solid currentColor;
   z-index: 2;
-  animation: glowPulse 1.5s ease-in-out infinite;
+  animation: none;
   font-size: 24px;
 }
 
+@keyframes glowPulseAdd {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 193, 7, 0.4); }
+  50%      { box-shadow: 0 0 14px 4px rgba(255, 193, 7, 0.6); }
+}
+@keyframes glowPulseSub {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(244, 67, 54, 0.4); }
+  50%      { box-shadow: 0 0 14px 4px rgba(244, 67, 54, 0.6); }
+}
+@keyframes glowPulseMul {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(76, 175, 80, 0.4); }
+  50%      { box-shadow: 0 0 14px 4px rgba(76, 175, 80, 0.6); }
+}
+@keyframes glowPulseDiv {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(33, 150, 243, 0.4); }
+  50%      { box-shadow: 0 0 14px 4px rgba(33, 150, 243, 0.6); }
+}
 
-@keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.4); }
-  50% { box-shadow: 0 0 14px 4px rgba(255, 255, 0, 0.6); }
+[data-theme="dark"] .tile-op.add {
+  animation: glowPulseAdd 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.3);
+}
+
+[data-theme="dark"] .tile-op.sub {
+  animation: glowPulseSub 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(239, 83, 80, 0.4);
+}
+
+[data-theme="dark"] .tile-op.mul {
+  animation: glowPulseMul 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(102, 187, 106, 0.4);
+}
+
+[data-theme="dark"] .tile-op.div {
+  animation: glowPulseDiv 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(41, 182, 246, 0.4);
+}
+
+[data-theme="light"] .tile-op.add {
+  animation: glowPulseAdd 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.25), 0 0 16px rgba(255, 193, 7, 0.15);
+}
+
+[data-theme="light"] .tile-op.sub {
+  animation: glowPulseSub 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.25), 0 0 16px rgba(244, 67, 54, 0.15);
+}
+
+[data-theme="light"] .tile-op.mul {
+  animation: glowPulseMul 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.25), 0 0 16px rgba(76, 175, 80, 0.15);
+}
+
+[data-theme="light"] .tile-op.div {
+  animation: glowPulseDiv 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.25), 0 0 16px rgba(33, 150, 243, 0.15);
 }
 
 .tile-op::after {
   content: '';
 }
 
-.tile-op.add    { background-color: #ffecb3; color: #8b4513; }
-.tile-op.sub    { background-color: #ffe0e0; color: #8b0000; }
-.tile-op.mul    { background-color: #d0f0c0; color: #006400; }
-.tile-op.div    { background-color: #e0f7fa; color: #004d40; }
+.tile-op.add    { background-color: #fff176; color: #5d4037; }
+.tile-op.sub    { background-color: #ef9a9a; color: #b71c1c; }
+.tile-op.mul    { background-color: #aed581; color: #33691e; }
+.tile-op.div    { background-color: #81d4fa; color: #01579b; }
 
 .spawned-op {
   animation: opflash 0.3s ease-in-out;
@@ -292,4 +364,204 @@ body {
 
 .pause-box button:hover {
   background: #666;
+}
+
+[data-theme="light"] {
+  background: #f7f7f7;
+  color: #111;
+}
+
+[data-theme="light"] .tile {
+  background-color: #ddd;
+  color: #111;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Restore operator tile glow/highlight for light theme with operator-specific glow */
+/* Operator tile border colors and styles for light and dark themes */
+[data-theme="light"] .tile-op {
+  border: 2px solid currentColor;
+}
+[data-theme="light"] .tile-op.add {
+  border-color: rgba(255, 193, 7, 0.8);
+}
+[data-theme="light"] .tile-op.sub {
+  border-color: rgba(244, 67, 54, 0.8);
+}
+[data-theme="light"] .tile-op.mul {
+  border-color: rgba(76, 175, 80, 0.8);
+}
+[data-theme="light"] .tile-op.div {
+  border-color: rgba(33, 150, 243, 0.8);
+}
+
+[data-theme="dark"] .tile-op.add {
+  border-color: rgba(255, 193, 7, 0.8);
+}
+[data-theme="dark"] .tile-op.sub {
+  border-color: rgba(244, 67, 54, 0.8);
+}
+[data-theme="dark"] .tile-op.mul {
+  border-color: rgba(76, 175, 80, 0.8);
+}
+[data-theme="dark"] .tile-op.div {
+  border-color: rgba(33, 150, 243, 0.8);
+}
+
+[data-theme="light"] .tile-tooltip {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #111;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] #op-prompt {
+  background: #fff;
+  color: #000;
+  border-color: #000;
+}
+
+[data-theme="light"] #debug-log {
+  background-color: #fff;
+  color: #000;
+}
+
+[data-theme="light"] .pause-box {
+  background: #eee;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .pause-box h2 {
+  color: #000;
+}
+
+[data-theme="light"] .pause-box button {
+  background: #ccc;
+  color: #111;
+}
+
+[data-theme="light"] .pause-box button:hover {
+  background: #bbb;
+}
+
+.menu-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+[data-theme="dark"] {
+  --bg: #111;
+  --fg: #fff;
+}
+
+[data-theme="light"] {
+  --bg: #f7f7f7;
+  --fg: #111;
+}
+
+.menu-screen h1,
+.menu-screen h2 {
+  font-size: 48px;
+  margin-bottom: 24px;
+}
+
+.menu-screen button {
+  padding: 12px 24px;
+  font-size: 20px;
+  margin: 8px;
+}
+
+.menu-screen label {
+  margin: 8px;
+}
+
+.menu-screen select {
+  margin-left: 8px;
+}
+
+#settings-back-btn {
+  margin-top: 32px;
+  font-size: 16px;
+}
+
+/* Theme-based tile variants for improved contrast */
+[data-theme="dark"] .tile-2    { background-color: #606060; color: #fff; }
+[data-theme="dark"] .tile-4    { background-color: #757575; color: #fff; }
+[data-theme="dark"] .tile-8    { background-color: #ffb74d; color: #000; }
+[data-theme="dark"] .tile-16   { background-color: #ffa726; color: #000; }
+[data-theme="dark"] .tile-32   { background-color: #ff8a65; color: #000; }
+[data-theme="dark"] .tile-64   { background-color: #ff7043; color: #000; }
+[data-theme="dark"] .tile-128  { background-color: #fbc02d; color: #000; }
+[data-theme="dark"] .tile-256  { background-color: #f9a825; color: #000; }
+[data-theme="dark"] .tile-512  { background-color: #f57f17; color: #fff; }
+[data-theme="dark"] .tile-1024 { background-color: #fbc02d; color: #fff; }
+[data-theme="dark"] .tile-2048 { background-color: #fdd835; color: #000; }
+
+[data-theme="light"] .tile-2    { background-color: #eee4da; color: #776e65; }
+[data-theme="light"] .tile-4    { background-color: #ede0c8; color: #776e65; }
+[data-theme="light"] .tile-8    { background-color: #f2b179; color: white; }
+[data-theme="light"] .tile-16   { background-color: #f59563; color: white; }
+[data-theme="light"] .tile-32   { background-color: #f67c5f; color: white; }
+[data-theme="light"] .tile-64   { background-color: #f65e3b; color: white; }
+[data-theme="light"] .tile-128  { background-color: #edcf72; color: white; }
+[data-theme="light"] .tile-256  { background-color: #edcc61; color: white; }
+[data-theme="light"] .tile-512  { background-color: #edc850; color: white; }
+[data-theme="light"] .tile-1024 { background-color: #edc53f; color: white; }
+[data-theme="light"] .tile-2048 { background-color: #edc22e; color: white; }
+
+.menu-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+[data-theme="dark"] {
+  --bg: #111;
+  --fg: #fff;
+}
+
+[data-theme="light"] {
+  --bg: #f7f7f7;
+  --fg: #111;
+}
+
+.menu-screen h1,
+.menu-screen h2 {
+  font-size: 48px;
+  margin-bottom: 24px;
+}
+
+.menu-screen button {
+  padding: 12px 24px;
+  font-size: 20px;
+  margin: 8px;
+}
+
+.menu-screen label {
+  margin: 8px;
+}
+
+.menu-screen select {
+  margin-left: 8px;
+}
+
+#settings-back-btn {
+  margin-top: 32px;
+  font-size: 16px;
 }

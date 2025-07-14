@@ -1,4 +1,14 @@
 import { setupDevModeUI, logEvent } from './devMode.js';
+import {
+  setupGameUI,
+  updateScoreDisplay,
+  setupWarningCounter,
+  setupWarningMessageArea,
+  showPenaltyBanner,
+  updateEndlessModeIndicator,
+  ensureTooltipArea,
+  showEndBanner
+} from './ui.js';
 import { tryMerge, applyOp } from './tileUtils.js';
 import { checkScoreForOpPrompt } from './operatorSystem.js';
 let weakMergeWarningsRemaining = 3;
@@ -15,6 +25,9 @@ let thresholdCheckEnabled = false;
 let moveLimit = 180;
 let minTileThreshold = 8;
 
+let warningsEnabled = true;
+let moveLimitEnabled = true;
+
 
 const operations = ['+', '-', '*', '/'];
 
@@ -25,7 +38,7 @@ let inputLock = false;
 window.onload = () => {
   setupDevModeUI(showEndBanner);
   setupGameUI();
-  startGame();
+  // startGame(); ← REMOVED to prevent auto-start
   document.addEventListener('keydown', handleInput);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
@@ -39,49 +52,12 @@ window.onload = () => {
   });
 };
 
-function setupGameUI() {
-  const gridElement = document.getElementById('grid');
-  // Center the grid horizontally and set its size
-  const tileSize = 80;
-  const gap = 8;
-  gridElement.style.position = 'relative';
-  gridElement.style.margin = '24px auto'; // centers horizontally
-  gridElement.style.display = 'block';
-  gridElement.style.width = `${(tileSize + gap) * gridSize - gap}px`;
-  gridElement.style.height = `${(tileSize + gap) * gridSize - gap}px`;
 
-  const scoreEl = document.getElementById('score');
-  if (scoreEl) {
-    scoreEl.innerHTML = '<div id="score-label">Score: 0</div><div id="highscore-label">High Score: ' + highScore + '</div>';
-    scoreEl.style.display = 'flex';
-    scoreEl.style.justifyContent = 'space-between';
-    scoreEl.style.width = '280px';
-    scoreEl.style.margin = '0 auto';
-    scoreEl.style.fontSize = '18px';
-  }
-
-  // Goal tracker UI
-  const tracker = document.getElementById('goal-tracker');
-  if (tracker) {
-    tracker.style.display = ''; // Let the inner HTML handle layout
-    tracker.style.justifyContent = '';
-    tracker.style.width = '280px';
-    tracker.style.margin = '8px auto';
-    tracker.style.fontSize = '14px';
-    tracker.innerHTML = `
-      <div style="display: flex; justify-content: space-between;">
-        <div id="move-counter">Moves: 0 / ${moveLimit}</div>
-        <div id="tile-threshold">Min Tile: ${minTileThreshold}</div>
-      </div>
-      <div style="margin-top: 4px; text-align: center;" id="warnings-left">Warnings Left: ${weakMergeWarningsRemaining}</div>
-    `;
-  }
-}
-
-function startGame() {
-  inEndlessMode = false;
+function startGame({ warningsEnabled: wEnabled = true, moveLimitEnabled: mEnabled = true } = {}) {
+  warningsEnabled = inEndlessMode ? false : wEnabled;
+  moveLimitEnabled = inEndlessMode ? false : mEnabled;
   inputLock = false;
-  moveLimit = 180;
+  moveLimit = moveLimitEnabled ? 180 : Infinity;
   // Remove endless mode indicator if present
   const indicator = document.getElementById('endless-indicator');
   if (indicator) indicator.remove();
@@ -91,13 +67,13 @@ function startGame() {
   largestTile = 0;
   moveIndex = 0;
   thresholdCheckEnabled = false;
-  weakMergeWarningsRemaining = 3;
-  // Update score display with high score
-  const scoreEl = document.getElementById('score');
-  if (scoreEl) {
-    scoreEl.innerHTML = '<div id="score-label">Score: 0</div><div id="highscore-label">High Score: ' + highScore + '</div>';
-  }
+  weakMergeWarningsRemaining = warningsEnabled ? 3 : 0;
   document.getElementById('win-lose-banner')?.remove();
+  // Setup UI helpers
+  updateScoreDisplay(0, highScore);
+  setupWarningCounter(weakMergeWarningsRemaining);
+  setupWarningMessageArea();
+  updateEndlessModeIndicator(inEndlessMode);
   spawnTile();
   spawnTile();
   drawTiles();
@@ -140,7 +116,7 @@ function handleInput(e) {
     if (!inEndlessMode && moveIndex >= moveLimit) {
       const highest = Math.max(...tiles.map(t => t.value));
       if (highest < 2048) {
-        showEndBanner('Move Limit Reached');
+        showEndBanner('Move Limit Reached', startGame);
         inputLock = true;
         return;
       }
@@ -166,7 +142,7 @@ function handleInput(e) {
         if (tile.createdAtMove !== undefined) {
           const age = moveIndex - tile.createdAtMove;
           if (age > graceMoves && tile.value < tile.mustReachValue) {
-            showEndBanner(`Eliminated — Tile ${tile.value} did not reach ${tile.mustReachValue} in time`);
+            showEndBanner(`Eliminated — Tile ${tile.value} did not reach ${tile.mustReachValue} in time`, startGame);
             inputLock = true;
             return;
           }
@@ -209,6 +185,8 @@ function move(dy, dx) {
           const currentMinThreshold = minTileThreshold + Math.floor(moveIndex / 10) * 8;
 
           if (
+            warningsEnabled &&
+            moveLimitEnabled &&
             !inEndlessMode &&
             mergedBySubOrDiv &&
             (typeof result !== 'number' || result < currentMinThreshold)
@@ -218,44 +196,30 @@ function move(dy, dx) {
               const shown = typeof result === 'number' ? result : 'invalid';
               weakMergeWarningsRemaining--;
               lastWeakMergeTime = moveIndex;
-              // Show a custom warning banner instead of alert
-              const warningBanner = document.createElement('div');
-              warningBanner.innerText = `⚠️ Weak result (${shown} < ${currentMinThreshold}). ${weakMergeWarningsRemaining} warning${weakMergeWarningsRemaining !== 1 ? 's' : ''} left.`;
-              warningBanner.style.position = 'fixed';
-              warningBanner.style.top = '20px';
-              warningBanner.style.left = '50%';
-              warningBanner.style.transform = 'translateX(-50%)';
-              warningBanner.style.background = 'rgba(255, 200, 0, 0.9)';
-              warningBanner.style.color = '#000';
-              warningBanner.style.padding = '12px 24px';
-              warningBanner.style.fontSize = '16px';
-              warningBanner.style.borderRadius = '8px';
-              warningBanner.style.zIndex = '1001';
-              warningBanner.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-              document.body.appendChild(warningBanner);
-              setTimeout(() => warningBanner.remove(), 2500);
+              // Show permanent warning message in container
+              const warningMsg = document.getElementById('warning-msg');
+              if (warningMsg) {
+                const warningLine = document.createElement('div');
+                warningLine.style.background = '#fff3cd';
+                warningLine.style.borderRadius = '6px';
+                warningLine.style.padding = '6px 12px';
+                warningLine.style.marginTop = '6px';
+                warningLine.style.color = '#d32f2f';
+                warningLine.style.fontSize = '14px';
+                warningLine.style.fontWeight = '500';
+                warningLine.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                warningLine.innerHTML = `⚠️ Weak merge – result ${shown} is below minimum ${currentMinThreshold}`;
+                warningMsg.appendChild(warningLine);
+                warningMsg.style.display = 'block';
+              }
             } else if (weakMergeWarningsRemaining <= 0 || (moveIndex - lastWeakMergeTime <= 3)) {
               if (!tile.penalized) {
                 moveLimit -= 10;
                 tile.penalized = true;
-                const penaltyBanner = document.createElement('div');
-                penaltyBanner.innerText = `❗ No warnings left — 10 moves lost`;
-                penaltyBanner.style.position = 'fixed';
-                penaltyBanner.style.top = '20px';
-                penaltyBanner.style.left = '50%';
-                penaltyBanner.style.transform = 'translateX(-50%)';
-                penaltyBanner.style.background = 'rgba(255, 80, 80, 0.9)';
-                penaltyBanner.style.color = '#fff';
-                penaltyBanner.style.padding = '12px 24px';
-                penaltyBanner.style.fontSize = '16px';
-                penaltyBanner.style.borderRadius = '8px';
-                penaltyBanner.style.zIndex = '1001';
-                penaltyBanner.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-                document.body.appendChild(penaltyBanner);
-                setTimeout(() => penaltyBanner.remove(), 2500);
+                showPenaltyBanner();
               } else {
                 const shown = typeof result === 'number' ? result : 'invalid';
-                showEndBanner(`Eliminated — Resulting tile too weak (${shown} < min)`);
+                showEndBanner(`Eliminated — Resulting tile too weak (${shown} < min)`, startGame);
                 inputLock = true;
                 return false;
               }
@@ -345,7 +309,8 @@ function drawTiles() {
       badge.style.right = '8px';
       badge.style.fontSize = '22px';
       badge.style.fontWeight = 'bold';
-      badge.style.textShadow = '0 0 2px black';
+      badge.style.textShadow = '0 0 3px rgba(0,0,0,0.4)';
+      badge.style.color = '#000';
       div.appendChild(badge);
 
       let wrapper;
@@ -377,11 +342,16 @@ function drawTiles() {
         tooltip.style.flexDirection = 'column';
         tooltip.style.alignItems = 'flex-start';
 
-        // Removed old positioning styles:
-        // tooltip.style.position = 'fixed';
-        // tooltip.style.top = `${gridRect.top}px`;
-        // tooltip.style.left = `${gridRect.right + 16}px`;
-        // tooltip.style.transform = 'none';
+        // Tooltip positioning and z-index to ensure visibility above all UI elements
+        tooltip.style.position = 'absolute';
+        tooltip.style.zIndex = '3001'; // Ensure it's above all other UI elements
+        tooltip.style.top = '100%';
+        tooltip.style.left = '0';
+        tooltip.style.marginLeft = '0';
+        tooltip.style.marginTop = '12px';
+        // tooltip.style.top = '-10px';
+        // tooltip.style.left = '100%';
+        // tooltip.style.marginLeft = '12px';
 
         tooltip.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
         tooltip.style.backdropFilter = 'blur(6px)';
@@ -394,6 +364,7 @@ function drawTiles() {
         tooltip.style.fontWeight = '600';
         tooltip.style.lineHeight = '1.6';
         tooltip.style.fontFamily = 'monospace';
+        // (removed tooltip.style.zIndex = '3000';)
       } else {
         wrapper = document.createElement('div');
         wrapper.className = 'tile-wrapper tile-op';
@@ -414,10 +385,12 @@ function drawTiles() {
       wrapper.onmouseenter = () => {
         const tooltipArea = document.getElementById('tooltip-area');
         tooltipArea.innerHTML = '';
+        // Move tooltip positioning and visibility logic after clearing innerHTML
         if (tooltip) {
           tooltipArea.appendChild(tooltip);
           tooltip.style.display = 'block';
           tooltipArea.style.display = 'block';
+          tooltipArea.style.zIndex = '3002'; // Ensure above warnings
         } else {
           tooltipArea.style.display = 'none';
         }
@@ -461,6 +434,12 @@ function drawTiles() {
 
       wrapper.appendChild(div);
       gridEl.appendChild(wrapper);
+
+      // If previewOp exists, ensure tooltip area is visible after appending tooltip
+      if (tile.previewOp) {
+        const tooltipArea = document.getElementById('tooltip-area');
+        tooltipArea.style.display = 'block';
+      }
     } else {
       div.innerText = tile.value;
       div.style.position = 'absolute';
@@ -483,26 +462,28 @@ function drawTiles() {
     highScore = score;
     localStorage.setItem('fusionHighScore', highScore);
   }
-  const scoreEl = document.getElementById('score');
-  if (scoreEl) {
-    scoreEl.innerHTML = '<div id="score-label">Score: ' + score + '</div><div id="highscore-label">High Score: ' + highScore + '</div>';
-  }
+  updateScoreDisplay(score, highScore);
   // Update goal tracker values
   const moveEl = document.getElementById('move-counter');
-  const tileThresholdEl = document.getElementById('tile-threshold');
+  const minTileEl = document.getElementById('min-tile');
   const thresholdInterval = 10;
   const currentThreshold = minTileThreshold + Math.floor(moveIndex / thresholdInterval) * 8;
-  if (moveEl) moveEl.innerText = `Moves: ${moveIndex} / ${moveLimit}`;
-  if (tileThresholdEl) tileThresholdEl.innerText = `Min Tile: ${currentThreshold}`;
+  if (moveEl) moveEl.innerText = `Moves Left: ${moveLimit - moveIndex}`;
+  if (minTileEl) minTileEl.innerText = `Min Tile: ${currentThreshold}`;
 
-  // Update warnings left
-  const warningsEl = document.getElementById('warnings-left');
-  if (warningsEl) warningsEl.innerText = `Warnings Left: ${weakMergeWarningsRemaining}`;
+  // Update floating warning counter
+  const warningCounter = document.getElementById('warning-counter');
+  if (warningCounter) warningCounter.innerText = `⚠️ Warnings Left: ${weakMergeWarningsRemaining}`;
+  // If in Endless Mode, update indicator to append warning count
+  updateEndlessModeIndicator(inEndlessMode);
 
   // Force hide tooltip after every move
   const tooltipArea = document.getElementById('tooltip-area');
   tooltipArea.innerHTML = '';
   tooltipArea.style.display = 'none';
+
+  // Ensure #tooltip-area exists and is after #grid in the DOM
+  ensureTooltipArea();
 }
 
 
@@ -511,7 +492,7 @@ function checkGameEnd() {
   if (inEndlessMode) return;
   const has2048 = tiles.some(t => t.value === 2048);
   if (has2048) {
-    showEndBanner('You Win!');
+    showEndBanner('You Win!', startGame);
     inputLock = true;
     return;
   }
@@ -542,88 +523,13 @@ function checkGameEnd() {
   }
 
   showEndBanner('Game Over');
+  showEndBanner('Game Over', startGame);
   inputLock = true;
 }
 
-export function showEndBanner(message) {
-  inputLock = true;
-  // Remove any existing banner before adding a new one
-  document.getElementById('win-lose-banner')?.remove();
-
-  const banner = document.createElement('div');
-  banner.id = 'win-lose-banner';
-  banner.innerText = message;
-  banner.style.position = 'fixed';
-  banner.style.top = '50%';
-  banner.style.left = '50%';
-  banner.style.transform = 'translate(-50%, -50%)';
-  banner.style.background = 'rgba(0, 0, 0, 0.8)';
-  banner.style.color = 'white';
-  banner.style.padding = '24px 48px';
-  banner.style.fontSize = '32px';
-  banner.style.fontWeight = 'bold';
-  banner.style.borderRadius = '12px';
-  banner.style.zIndex = '999';
-
-  if (message === 'You Win!') {
-    const newGameBtn = document.createElement('button');
-    newGameBtn.innerText = 'New Game';
-    newGameBtn.onclick = () => {
-      document.getElementById('win-lose-banner')?.remove();
-      startGame();
-    };
-    newGameBtn.style.marginTop = '16px';
-    newGameBtn.style.marginRight = '8px';
-    newGameBtn.style.padding = '8px 16px';
-    newGameBtn.style.fontSize = '16px';
-
-    const endlessBtn = document.createElement('button');
-    endlessBtn.innerText = 'Endless Mode';
-    endlessBtn.onclick = () => {
-      document.getElementById('win-lose-banner')?.remove();
-      inputLock = false;
-      inEndlessMode = true;
-
-      let indicator = document.getElementById('endless-indicator');
-      if (!indicator) {
-        indicator = document.createElement('div');
-        indicator.id = 'endless-indicator';
-        indicator.innerText = 'ENDLESS MODE';
-        indicator.style.position = 'fixed';
-        indicator.style.top = '12px';
-        indicator.style.right = '20px';
-        indicator.style.backgroundColor = '#111';
-        indicator.style.color = '#0f0';
-        indicator.style.padding = '6px 12px';
-        indicator.style.fontSize = '14px';
-        indicator.style.fontWeight = 'bold';
-        indicator.style.border = '1px solid #0f0';
-        indicator.style.borderRadius = '6px';
-        indicator.style.zIndex = '1000';
-        document.body.appendChild(indicator);
-      }
-    };
-    endlessBtn.style.marginTop = '16px';
-    endlessBtn.style.padding = '8px 16px';
-    endlessBtn.style.fontSize = '16px';
-
-    banner.appendChild(document.createElement('br'));
-    banner.appendChild(newGameBtn);
-    banner.appendChild(endlessBtn);
-  } else {
-    // For all other cases, always show a 'New Game' button
-    const retryBtn = document.createElement('button');
-    retryBtn.innerText = 'New Game';
-    retryBtn.onclick = () => {
-      document.getElementById('win-lose-banner')?.remove();
-      startGame();
-    };
-    retryBtn.style.marginTop = '16px';
-    retryBtn.style.padding = '8px 16px';
-    retryBtn.style.fontSize = '16px';
-    banner.appendChild(document.createElement('br'));
-    banner.appendChild(retryBtn);
-  }
-
-  document.body.appendChild(banner);
+export function launchGame({ endlessMode = false, warningsEnabled = true, moveLimitEnabled = true } = {}) {
+  inEndlessMode = endlessMode;
+  document.getElementById('main-menu').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  startGame({ warningsEnabled, moveLimitEnabled });
 }

@@ -1,5 +1,3 @@
-
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -77,3 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Fixed "New Game" button unresponsiveness after winning to ensure it restarts the game correctly.  
 - Resolved Endless Mode issue where the win condition triggered on every move; now win triggers are disabled during Endless Mode.  
 - Ensured Endless Mode lose condition only triggers when no moves remain and the grid is full, preventing premature game overs.
+
+## [1.2.2] - 2025-07-15
+
+### Added
+- First-time overlay that introduces new players to the controls (arrow keys) and game objective. The overlay appears once and is dismissed on click.
+
+### Changed
+- Tooltip ("Game Key") now includes a new first entry explaining how to move tiles with arrow keys and clarifying that WASD is not supported.

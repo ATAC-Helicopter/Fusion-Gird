@@ -7,7 +7,8 @@ import {
   showPenaltyBanner,
   updateEndlessModeIndicator,
   ensureTooltipArea,
-  showEndBanner
+  showEndBanner,
+  showFirstTimeOverlay
 } from './ui.js';
 import { tryMerge, applyOp } from './tileUtils.js';
 import { checkScoreForOpPrompt } from './operatorSystem.js';
@@ -38,6 +39,7 @@ let inputLock = false;
 window.onload = () => {
   setupDevModeUI(showEndBanner);
   setupGameUI();
+  showFirstTimeOverlay();
   document.addEventListener('keydown', handleInput);
 };
 

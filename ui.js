@@ -252,6 +252,7 @@ export function setupInfoBox() {
   box.innerHTML = `
   <h3 style="margin: 0 0 12px 0; color: #fff; font-size: 20px;">📘 Game Rules</h3>
   <ul style="font-size: 16px; line-height: 1.9; padding-left: 18px; color: #ddd;">
+<li><strong style="color: #fff;">Controls:</strong> Use ← ↑ → ↓ arrow keys to move tiles. WASD is not supported.</li>
 <li><strong style="color: #fff;">Objective:</strong> Reach a tile between 2048 and 2500 to win. Endless mode allows playing beyond.</li>    <li><strong style="color: #fff;">Normal Tiles:</strong> Merge when equal (e.g. 4 + 4 → 8).</li>
     <li><strong style="color: #fff;">Operator Tiles (P):</strong> Merge with adjacent tiles using +, −, ×, ÷. Result must be between 2 and 4096.</li>
     <li><strong style="color: #fff;">Move Limit:</strong> You have 180 moves. Exceeding it without reaching 2048 ends the game.</li>
@@ -265,4 +266,38 @@ export function setupInfoBox() {
 
   button.onclick = () => {
 box.classList.toggle('visible');  };
+}
+export function showFirstTimeOverlay() {
+  if (localStorage.getItem('fusionFirstTimePlayed')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'first-time-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.backgroundColor = 'rgba(0,0,0,0.85)';
+  overlay.style.color = '#fff';
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.zIndex = '2000';
+  overlay.style.textAlign = 'center';
+  overlay.style.fontSize = '20px';
+  overlay.style.padding = '40px';
+
+  overlay.innerHTML = `
+    <h2 style="margin-bottom: 20px;">Welcome to Fusion Grid!</h2>
+    <p style="max-width: 500px;">Use the ← ↑ → ↓ arrow keys to slide tiles and combine them using math! Reach the target tile to win.</p>
+    <p style="margin-top: 24px; font-size: 16px; color: #ccc;">Click anywhere to start.</p>
+  `;
+
+  overlay.addEventListener('click', () => {
+    overlay.remove();
+    localStorage.setItem('fusionFirstTimePlayed', 'true');
+  });
+
+  document.body.appendChild(overlay);
 }

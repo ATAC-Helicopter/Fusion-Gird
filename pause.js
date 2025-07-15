@@ -39,36 +39,32 @@ function togglePause() {
   setPauseState(!isPaused);
 }
 
+function bindButtonOnce(id, handler) {
+  const btn = document.getElementById(id);
+  if (btn && !btn.dataset.bound) {
+    btn.addEventListener('click', handler);
+    btn.dataset.bound = 'true';
+  }
+}
+
 function bindPauseMenuButtons() {
-  const continueBtn = document.getElementById('btn-continue');
-  if (continueBtn && !continueBtn.dataset.bound) {
-    continueBtn.addEventListener('click', () => {
-      logEvent('[DEBUG] Continue button clicked');
-      resumeGame();
-    });
-    continueBtn.dataset.bound = 'true';
-  }
+  bindButtonOnce('btn-continue', () => {
+    logEvent('[DEBUG] Continue button clicked');
+    resumeGame();
+  });
 
-  const newGameBtn = document.getElementById('btn-newgame');
-  if (newGameBtn && !newGameBtn.dataset.bound) {
-    newGameBtn.addEventListener('click', () => {
-      logEvent('[DEBUG] New Game button clicked');
-      resumeGame();
-      launchGame();  // start fresh game immediately
-    });
-    newGameBtn.dataset.bound = 'true';
-  }
+  bindButtonOnce('btn-newgame', () => {
+    logEvent('[DEBUG] New Game button clicked');
+    resumeGame();
+    launchGame();
+  });
 
-  const quitBtn = document.getElementById('btn-quit');
-  if (quitBtn && !quitBtn.dataset.bound) {
-    quitBtn.addEventListener('click', () => {
-      logEvent('[DEBUG] Quit button clicked');
-      resumeGame();
-      document.getElementById('app').style.display = 'none';
-      document.getElementById('main-menu').style.display = 'flex';
-    });
-    quitBtn.dataset.bound = 'true';
-  }
+  bindButtonOnce('btn-quit', () => {
+    logEvent('[DEBUG] Quit button clicked');
+    resumeGame();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('main-menu').style.display = 'flex';
+  });
 }
 
 // Keyboard shortcut

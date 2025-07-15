@@ -1,23 +1,29 @@
-
+export function isValid2048Value(value) {
+  // Returns true if the value is a power of 2 between 2 and 4096
+  return (value & (value - 1)) === 0 && value >= 2 && value <= 4096;
+}
 
 export function tryMerge(a, b) {
+  const valA = a.value;
+  const valB = b.value;
+
   const opTile = a.op ? a : b.op ? b : null;
   if (opTile) {
-    const valA = a.value;
-    const valB = b.value;
     const op = opTile.op;
-
     let result = applyOp(valA, valB, op);
     if (result !== null) {
-      result = Math.max(2, Math.min(result, 4096)); // clamp to [2, 4096]
+      result = Math.max(2, Math.min(result, 4096)); // Clamp to [2, 4096]
+      if (!isValid2048Value(result)) {
+        return { value: result, blocking: true };
+      }
       return result;
     }
     return null;
   }
 
-  // Fallback to normal merge
-  if (a.value === b.value) {
-    return a.value * 2;
+  // Fallback to default merge (only same values)
+  if (valA === valB) {
+    return valA * 2;
   }
 
   return null;
@@ -35,12 +41,5 @@ export function applyOp(a, b, op) {
       break;
   }
 
-  if (
-    result !== null &&
-    Number.isInteger(result) &&
-    result >= 2 &&
-    result <= 4096
-  ) return result;
-
-  return null;
+  return result;
 }

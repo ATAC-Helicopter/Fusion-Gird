@@ -8,34 +8,42 @@ import {
   updateEndlessModeIndicator,
   ensureTooltipArea,
   showEndBanner,
-  showFirstTimeOverlay
+  showFirstTimeOverlay,
+  setupBonusPointsCounter,
+  updateBonusPoints
 } from './ui.js';
 import { tryMerge, applyOp } from './tileUtils.js';
 import { checkScoreForOpPrompt } from './operatorSystem.js';
-let weakMergeWarningsRemaining = 3;
-let lastWeakMergeTime = 0;
+// === Game Constants and Config ===
 const gridSize = 4;
+const operations = ['+', '-', '*', '/'];
+
+// === Game State ===
 let grid = [];
 let tiles = [];
 let score = 0;
 let highScore = localStorage.getItem('fusionHighScore') ? parseInt(localStorage.getItem('fusionHighScore')) : 0;
-let nextOpThreshold = { value: 100 };
-let moveIndex = 0;
 let largestTile = 0;
-let thresholdCheckEnabled = false;
-let moveLimit = 180;
-let minTileThreshold = 8;
+let moveIndex = 0;
 let gameStartMoveIndex = 0;
+
+let bonusPoints = 0;
+
+// === Gameplay Settings ===
+let inEndlessMode = false;
 let warningsEnabled = true;
 let moveLimitEnabled = true;
+let moveLimit = 180;
+let minTileThreshold = 8;
 
-
-const operations = ['+', '-', '*', '/'];
-
-let inEndlessMode = false;
-
+// === Gameplay Flags and Trackers ===
+let weakMergeWarningsRemaining = 3;
+let lastWeakMergeTime = 0;
+let thresholdCheckEnabled = false;
+let nextOpThreshold = { value: 100 };
 let inputLock = false;
 
+// === Initialization on Window Load ===
 window.onload = () => {
   setupDevModeUI(showEndBanner);
   setupGameUI();
@@ -43,31 +51,40 @@ window.onload = () => {
   document.addEventListener('keydown', handleInput);
 };
 
-
-
-
+// === Start a New Game ===
 function startGame({ warningsEnabled: wEnabled = true, moveLimitEnabled: mEnabled = true } = {}) {
   warningsEnabled = inEndlessMode ? false : wEnabled;
   moveLimitEnabled = inEndlessMode ? false : mEnabled;
-  inputLock = false;
   moveLimit = moveLimitEnabled ? 180 : Infinity;
+
   // Remove endless mode indicator if present
   const indicator = document.getElementById('endless-indicator');
   if (indicator) indicator.remove();
+
+  // Reset game state
   grid = Array(gridSize * gridSize).fill(null);
   tiles = [];
   score = 0;
   largestTile = 0;
   moveIndex = 0;
-  const infoBox = document.getElementById('info-box');
-if (infoBox && infoBox.style.display === 'none') {
-  infoBox.style.display = 'block';
-}
   gameStartMoveIndex = 0;
   thresholdCheckEnabled = false;
   weakMergeWarningsRemaining = warningsEnabled ? 3 : 0;
+
+  // Bonus points system
+  bonusPoints = 0;
+  setupBonusPointsCounter();
+  updateBonusPoints(bonusPoints);
+
+  // Show info box if hidden
+  const infoBox = document.getElementById('info-box');
+  if (infoBox && infoBox.style.display === 'none') {
+    infoBox.style.display = 'block';
+  }
+
   document.getElementById('win-lose-banner')?.remove();
-  // Setup UI helpers
+
+  // Setup UI and spawn initial tiles
   updateScoreDisplay(0, highScore);
   setupWarningCounter(weakMergeWarningsRemaining);
   setupWarningMessageArea();
@@ -75,6 +92,12 @@ if (infoBox && infoBox.style.display === 'none') {
   spawnTile();
   spawnTile();
   drawTiles();
+
+  // Unlock input and expose global game state
+  inputLock = false;
+  window.grid = grid;
+  window.tiles = tiles;
+  window.checkGameEnd = checkGameEnd;
 }
 
 function spawnTile() {
@@ -95,59 +118,88 @@ function spawnTile() {
 }
 
 function handleInput(e) {
+  // Ignore input if locked or end banner shown
   if (inputLock || document.getElementById('win-lose-banner')) return;
 
+  // Only handle arrow keys
   const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
   if (!keys.includes(e.key)) return;
   e.preventDefault();
 
+  // Map keys to moves
   let moved = false;
   switch (e.key) {
-    case 'ArrowLeft': moved = move(0, -1); break;
-    case 'ArrowRight': moved = move(0, 1); break;
-    case 'ArrowUp': moved = move(-1, 0); break;
-    case 'ArrowDown': moved = move(1, 0); break;
+    case 'ArrowLeft':
+      moved = move(0, -1);
+      break;
+    case 'ArrowRight':
+      moved = move(0, 1);
+      break;
+    case 'ArrowUp':
+      moved = move(-1, 0);
+      break;
+    case 'ArrowDown':
+      moved = move(1, 0);
+      break;
   }
 
-  if (moved) {
-    console.log(`\n=== MOVE ${++moveIndex} ===`);
-    
-    if (!inEndlessMode && moveIndex >= moveLimit) {
-      const highest = Math.max(...tiles.map(t => t.value));
-      if (highest < 2048) {
-        showEndBanner('Move Limit Reached', startGame);
-        inputLock = true;
-        return;
-      }
+  // No move made: exit early
+  if (!moved) return;
+
+  console.log(`\n=== MOVE ${++moveIndex} ===`);
+
+  // Move limit check (non-endless)
+  if (!inEndlessMode && moveIndex >= moveLimit) {
+    const highest = Math.max(...tiles.map(t => t.value));
+    if (highest < 2048) {
+      showEndBanner('Move Limit Reached', startGame);
+      inputLock = true;
+      return;
     }
-    inputLock = true;
-    spawnTile();
-    checkScoreForOpPrompt(tiles, score, nextOpThreshold, operations, grid, gridSize);
-    drawTiles();
-    logEvent(`[INFO] Largest tile: ${largestTile}`);
-    setTimeout(() => inputLock = false, 80); // debounce delay
-    checkGameEnd();
-    // Dynamic minimum tile threshold check
-    const thresholdInterval = 10;
-    const currentThreshold = minTileThreshold + Math.floor(moveIndex / thresholdInterval) * 8;
-    const metThreshold = tiles.some(t => t.value >= currentThreshold);
-    if (!thresholdCheckEnabled && metThreshold) {
-      thresholdCheckEnabled = true;
+  }
+
+  // Lock input during processing
+  inputLock = true;
+
+  // Spawn a new tile
+  spawnTile();
+
+  // Check operator prompt and update
+  checkScoreForOpPrompt(tiles, score, nextOpThreshold, operations, grid, gridSize);
+
+  // Redraw tiles
+  drawTiles();
+
+  // Log largest tile
+  logEvent(`[INFO] Largest tile: ${largestTile}`);
+
+  // Release input lock after debounce delay
+  setTimeout(() => {
+    inputLock = false;
+  }, 80);
+
+  // Check if game ended
+  checkGameEnd();
+
+  // Update threshold tracking
+  const thresholdInterval = 10;
+  const currentThreshold = minTileThreshold + Math.floor(moveIndex / thresholdInterval) * 8;
+  const metThreshold = tiles.some(t => t.value >= currentThreshold);
+  if (!thresholdCheckEnabled && metThreshold) {
+    thresholdCheckEnabled = true;
+  }
+
+  // Weak tile elimination check (again)
+  if (!inEndlessMode && moveIndex >= moveLimit) {
+    const highest = Math.max(...tiles.map(t => t.value));
+    if (highest < 2048) {
+      showEndBanner('Move Limit Reached', startGame);
+      inputLock = true;
+      return;
     }
-    // Weak tile elimination logic — merge-grace-period only (no persistent-tile check)
-    if (!inEndlessMode && moveIndex >= moveLimit) {
-  const highest = Math.max(...tiles.map(t => t.value));
-  if (highest < 2048) {
-    showEndBanner('Move Limit Reached', startGame);
-    inputLock = true;
-    return;
   }
 }
-      }
-    }
   
-
-
 function move(dy, dx) {
   let moved = false;
   const order = [...Array(gridSize).keys()];
@@ -168,6 +220,7 @@ function move(dy, dx) {
         let target = grid[targetIdx];
 
         if (!target) {
+          if (tile.blocking) break; // Prevent blocked tiles from moving
           grid[ty * gridSize + tx] = tile;
           grid[ny * gridSize + nx] = null;
           logEvent(`[MOVE] Moved tile from (${ny}, ${nx}) to (${ty}, ${tx})`);
@@ -175,6 +228,7 @@ function move(dy, dx) {
           nx = tx; ny = ty;
           moved = true;
         } else {
+          if (tile.blocking || target.blocking) break;
           const result = tryMerge(tile, target);
           const mergedBySubOrDiv = (tile.op === '-' || tile.op === '/');
 
@@ -223,8 +277,19 @@ if (
   }
 }
           if (result !== null) {
-            tile.value = result;
+            const mergeValue = typeof result === 'object' ? result.value : result;
+            const isBlocking = typeof result === 'object' && result.blocking;
+
+            tile.value = isBlocking ? 0 : mergeValue;
             tile.op = null;
+
+            if (isBlocking) {
+              tile.blocking = true;
+              tile.op = null; // Remove operator
+            } else {
+              delete tile.blocking;
+            }
+
             // Remove weak tile tracking after merge
             delete tile.createdAtMove;
             delete tile.mustReachValue;
@@ -233,14 +298,36 @@ if (
             tile.index = ty * gridSize + tx;
             tiles = tiles.filter(t => t !== target);
             moved = true;
+
             if (tile.op === '-' || tile.op === '/') {
-              score -= result;
+              score -= mergeValue;
               if (score < 0) score = 0;
             } else {
-              score += result;
+              score += mergeValue;
             }
-            if (result > largestTile) largestTile = result;
-            logEvent(`[MERGE] Merged tiles to ${result} at index ${ty * gridSize + tx}`);
+
+            if (mergeValue > largestTile) largestTile = mergeValue;
+            logEvent(`[MERGE] Merged tiles to ${mergeValue}${isBlocking ? ' (blocking)' : ''} at index ${ty * gridSize + tx}`);
+
+            // Bonus points system
+            if (!isBlocking && mergeValue >= 128) {
+              bonusPoints++;
+              updateBonusPoints(bonusPoints);
+              showBonusPointsChange(+1);
+
+              if (bonusPoints >= 2) {
+                const blockingTileIndex = tiles.findIndex(t => t.blocking);
+                if (blockingTileIndex !== -1) {
+                  const blockingTile = tiles[blockingTileIndex];
+                  grid[blockingTile.index] = null;
+                  tiles.splice(blockingTileIndex, 1);
+                  drawTiles();
+                  bonusPoints -= 2;
+                  updateBonusPoints(bonusPoints);
+                  showBonusPointsChange(-2);
+                }
+              }
+            }
           }
           break;
         }
@@ -277,6 +364,16 @@ function drawTiles() {
     const x = tile.index % gridSize;
     const y = Math.floor(tile.index / gridSize);
     div.className = 'tile';
+    if (tile.blocking) {
+      div.classList.add('blocking');
+      div.innerText = '❌';
+      tile.op = null;
+      div.style.position = 'absolute';
+      div.style.left = `${x * (tileSize + gap)}px`;
+      div.style.top = `${y * (tileSize + gap)}px`;
+      gridEl.appendChild(div);
+      continue; // Skip normal tile rendering
+    }
     const tileClass = 'tile-' + tile.value;
     div.classList.add(tileClass);
 
@@ -488,7 +585,7 @@ function drawTiles() {
 function checkGameEnd() {
   // Endless mode: Only lose if grid is full and no valid moves remain. No win triggers.
   if (inEndlessMode) {
-    const emptyExists = grid.some(t => t === null);
+    const emptyExists = grid.some(t => t == null);
     if (emptyExists) return;
     // Try all possible moves
     for (let y = 0; y < gridSize; y++) {
@@ -502,6 +599,8 @@ function checkGameEnd() {
           if (nx >= gridSize || ny >= gridSize) continue;
           const neighbor = grid[ny * gridSize + nx];
           if (!neighbor) return;
+          // Skip blocking tiles for merge checks
+          if (tile.blocking || neighbor.blocking) continue;
           if (tile.value === neighbor.value) return;
           if (tile.op || neighbor.op) {
             if (tryMerge(tile, neighbor) !== null) return;
@@ -516,14 +615,13 @@ function checkGameEnd() {
   }
   // Normal mode: win and lose conditions
   const winMin = 2048;
-  const winMax = 2500;
-  const hasWinningTile = tiles.some(t => t.value >= winMin && t.value <= winMax);
+  const hasWinningTile = tiles.some(t => t.value === winMin);
   if (hasWinningTile) {
     showEndBanner('You Win!', startGame);
     inputLock = true;
     return;
   }
-  const emptyExists = grid.some(t => t === null);
+  const emptyExists = grid.some(t => t == null);
   if (emptyExists) return;
   // Try all possible moves
   for (let y = 0; y < gridSize; y++) {
@@ -537,6 +635,8 @@ function checkGameEnd() {
         if (nx >= gridSize || ny >= gridSize) continue;
         const neighbor = grid[ny * gridSize + nx];
         if (!neighbor) return;
+        // Skip blocking tiles for merge checks
+        if (tile.blocking || neighbor.blocking) continue;
         if (tile.value === neighbor.value) return;
         if (tile.op || neighbor.op) {
           if (tryMerge(tile, neighbor) !== null) return;

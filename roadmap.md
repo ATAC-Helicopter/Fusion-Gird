@@ -6,12 +6,13 @@
 - Tooltip tile preview
 - Endless mode
 - Dev testing buttons (simulate win/lose)
-- Win condition tweak: configurable tile value range for victory
 - Penalty and warning system improvements with visual feedback and pause integration
 - UI/UX overhaul including theme selector, OP tile redesign, warning display revamp, and layout improvements
 - Info panel (game key) added with toggleable visibility
 - Complete pause system rewrite with button improvements and input locking
 - Debug enhancements with robust logging and event binding fixes
+- Blocking tiles and Bonus Points system
+- Win condition fixed: reach exactly 2048 tile to win
 
 ## 🚧 In Progress
 - AI autoplay: random, smart, pattern-based

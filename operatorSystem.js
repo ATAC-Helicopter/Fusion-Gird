@@ -9,16 +9,14 @@ export function checkScoreForOpPrompt(tiles, score, nextOpThresholdObj, operatio
 }
 
 function assignRandomOpToTile(tiles, operations, grid, gridSize) {
-  const candidates = tiles.filter(t => !t.op);
+  const candidates = tiles.filter(t => !t.op && !t.blocking);
   if (candidates.length === 0) return;
   const target = candidates[Math.floor(Math.random() * candidates.length)];
   target.op = operations[Math.floor(Math.random() * operations.length)];
   logEvent(`[OPERATOR] Assigned operator ${target.op} to tile at index ${target.index}`);
 
-  const symbol = target.op === '+' ? '+' :
-                 target.op === '-' ? '−' :
-                 target.op === '*' ? '×' :
-                 target.op === '/' ? '÷' : target.op;
+  const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+  const symbol = symbols?.[target.op] ?? target.op ?? '?';
 
   const targetX = target.index % gridSize;
   const targetY = Math.floor(target.index / gridSize);

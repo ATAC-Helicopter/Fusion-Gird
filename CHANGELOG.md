@@ -1,3 +1,28 @@
+# ## [1.3.0] - 2025-07-15
+#
+# ### Added
+#
+# - Blocking tiles that block movement until removed by spending bonus points.  
+# - Bonus points system earned by merging tiles with value ≥ 128, spendable to remove blocking tiles.  
+# - Info panel (“game key”) with comprehensive rules, controls, and gameplay explanations.  
+# - Responsive grid layout using CSS Grid for better tile alignment and centering on all screen sizes.  
+# - Tooltip system enhancements providing detailed merge previews on operator tiles.  
+# - Full pause menu system rewrite with robust input locking and improved button functionality.  
+#
+# ### Changed
+#
+# - Win condition fixed to reaching exactly tile 2048 (previously a range).  
+# - Warning and penalty system enhanced with a grace period of 3 warnings for weak merges before penalties apply.  
+# - Endless Mode disables warnings, penalties, and blocking tiles for unrestricted play.  
+# - UI/UX improvements for layout consistency, theme support, and visual feedback.  
+#
+# ### Fixed
+#
+# - Pause menu button responsiveness and event binding issues.  
+# - New Game button functionality after winning.  
+# - Endless Mode win/lose condition bugs preventing premature triggers.  
+# - Operator tile styling and tooltip layering issues.  
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -83,3 +108,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - Tooltip ("Game Key") now includes a new first entry explaining how to move tiles with arrow keys and clarifying that WASD is not supported.
+
+## [1.3.0] - 2025-07-15
+
+### Added
+
+- Blocking tiles that block movement until removed by spending bonus points.  
+- Bonus points system earned by merging tiles with value ≥ 128, spendable to remove blocking tiles.  
+- Info panel (“game key”) with comprehensive rules, controls, and gameplay explanations.  
+- Responsive grid layout using CSS Grid for better tile alignment and centering on all screen sizes.  
+- Tooltip system enhancements providing detailed merge previews on operator tiles.  
+- Full pause menu system rewrite with robust input locking and improved button functionality.  
+
+### Changed
+
+- Win condition fixed to reaching exactly tile 2048 (previously a range).  
+- Warning and penalty system enhanced with a grace period of 3 warnings for weak merges before penalties apply.  
+- Endless Mode disables warnings, penalties, and blocking tiles for unrestricted play.  
+- UI/UX improvements for layout consistency, theme support, and visual feedback.  
+
+### Fixed
+
+- Pause menu button responsiveness and event binding issues.  
+- New Game button functionality after winning.  
+- Endless Mode win/lose condition bugs preventing premature triggers.  
+- Operator tile styling and tooltip layering issues.

@@ -1,12 +1,20 @@
+import { launchGame } from './game.js';
+
+function styleButton(btn) {
+  btn.style.marginTop = '16px';
+  btn.style.padding = '8px 16px';
+  btn.style.fontSize = '16px';
+}
+
 export function setupGameUI(moveLimit = 180, minTileThreshold = 8) {
   const gridElement = document.getElementById('grid');
-  const tileSize = 80;
-  const gap = 8;
+  const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
+  const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap-size'));
   gridElement.style.position = 'relative';
   gridElement.style.margin = '24px auto';
   gridElement.style.display = 'block';
-  gridElement.style.width = `${(tileSize + gap) * 4 - gap}px`;
-  gridElement.style.height = `${(tileSize + gap) * 4 - gap}px`;
+  // gridElement.style.width = `${(tileSize + gap) * 4 - gap}px`;
+  // gridElement.style.height = `${(tileSize + gap) * 4 - gap}px`;
 
   const scoreEl = document.getElementById('score');
   if (scoreEl) {
@@ -112,8 +120,9 @@ export function updateEndlessModeIndicator(enabled) {
     indicator = document.createElement('div');
     indicator.id = 'endless-indicator';
     indicator.style.position = 'fixed';
-    indicator.style.top = '12px';
+    indicator.style.bottom = '12px';
     indicator.style.left = '12px';
+    indicator.style.top = '';
     indicator.style.zIndex = '999';
     indicator.style.padding = '6px 12px';
     indicator.style.borderRadius = '6px';
@@ -158,6 +167,11 @@ export function showEndBanner(message, startGameCallback) {
   banner.style.borderRadius = '12px';
   banner.style.zIndex = '999';
 
+  banner.style.display = 'flex';
+  banner.style.flexDirection = 'column';
+  banner.style.alignItems = 'center';
+  banner.style.justifyContent = 'center';
+
   if (message === 'You Win!') {
     const newGameBtn = document.createElement('button');
     newGameBtn.innerText = 'New Game';
@@ -165,41 +179,23 @@ export function showEndBanner(message, startGameCallback) {
       document.getElementById('win-lose-banner')?.remove();
       if (typeof startGameCallback === 'function') startGameCallback();
     };
-    newGameBtn.style.marginTop = '16px';
+    styleButton(newGameBtn);
     newGameBtn.style.marginRight = '8px';
-    newGameBtn.style.padding = '8px 16px';
-    newGameBtn.style.fontSize = '16px';
 
     const endlessBtn = document.createElement('button');
     endlessBtn.innerText = 'Endless Mode';
     endlessBtn.onclick = () => {
       document.getElementById('win-lose-banner')?.remove();
-      const indicator = document.getElementById('endless-indicator');
-      if (!indicator) {
-        const newIndicator = document.createElement('div');
-        newIndicator.id = 'endless-indicator';
-        newIndicator.innerText = 'ENDLESS MODE';
-        newIndicator.style.position = 'fixed';
-        newIndicator.style.top = '12px';
-        newIndicator.style.right = '20px';
-        newIndicator.style.backgroundColor = '#111';
-        newIndicator.style.color = '#0f0';
-        newIndicator.style.padding = '6px 12px';
-        newIndicator.style.fontSize = '14px';
-        newIndicator.style.fontWeight = 'bold';
-        newIndicator.style.border = '1px solid #0f0';
-        newIndicator.style.borderRadius = '6px';
-        newIndicator.style.zIndex = '1000';
-        document.body.appendChild(newIndicator);
-      }
+      launchGame({ endlessMode: true, warningsEnabled: false, moveLimitEnabled: false });
     };
-    endlessBtn.style.marginTop = '16px';
-    endlessBtn.style.padding = '8px 16px';
-    endlessBtn.style.fontSize = '16px';
+    styleButton(endlessBtn);
 
-    banner.appendChild(document.createElement('br'));
-    banner.appendChild(newGameBtn);
-    banner.appendChild(endlessBtn);
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.gap = '12px';
+    btnRow.appendChild(newGameBtn);
+    btnRow.appendChild(endlessBtn);
+    banner.appendChild(btnRow);
   } else {
     const retryBtn = document.createElement('button');
     retryBtn.innerText = 'New Game';
@@ -207,11 +203,12 @@ export function showEndBanner(message, startGameCallback) {
       document.getElementById('win-lose-banner')?.remove();
       if (typeof startGameCallback === 'function') startGameCallback();
     };
-    retryBtn.style.marginTop = '16px';
-    retryBtn.style.padding = '8px 16px';
-    retryBtn.style.fontSize = '16px';
-    banner.appendChild(document.createElement('br'));
-    banner.appendChild(retryBtn);
+    styleButton(retryBtn);
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.gap = '12px';
+    btnRow.appendChild(retryBtn);
+    banner.appendChild(btnRow);
   }
 
   document.body.appendChild(banner);
@@ -249,23 +246,29 @@ export function setupInfoBox() {
   box.style.width = '420px';
   box.style.boxShadow = '0 6px 14px rgba(0,0,0,0.4)';
   box.style.display = 'none';
-  box.innerHTML = `
-  <h3 style="margin: 0 0 12px 0; color: #fff; font-size: 20px;">📘 Game Rules</h3>
+box.innerHTML = `
+  <h3 style="margin: 0 0 12px 0; color: #fff; font-size: 20px;">📘 Fusion Grid - Game Rules</h3>
   <ul style="font-size: 16px; line-height: 1.9; padding-left: 18px; color: #ddd;">
-<li><strong style="color: #fff;">Controls:</strong> Use ← ↑ → ↓ arrow keys to move tiles. WASD is not supported.</li>
-<li><strong style="color: #fff;">Objective:</strong> Reach a tile between 2048 and 2500 to win. Endless mode allows playing beyond.</li>    <li><strong style="color: #fff;">Normal Tiles:</strong> Merge when equal (e.g. 4 + 4 → 8).</li>
-    <li><strong style="color: #fff;">Operator Tiles (P):</strong> Merge with adjacent tiles using +, −, ×, ÷. Result must be between 2 and 4096.</li>
-    <li><strong style="color: #fff;">Move Limit:</strong> You have 180 moves. Exceeding it without reaching 2048 ends the game.</li>
-    <li><strong style="color: #fff;">Minimum Tile Rule:</strong> Every 10 moves increases the required tile value. Falling below this with − or ÷ can cause a warning.</li>
-    <li><strong style="color: #fff;">Warnings:</strong> You get 3 total. Triggered when weak merges occur under the threshold.</li>
-    <li><strong style="color: #fff;">Penalties:</strong> If warnings are exhausted, −10 moves or elimination may occur.</li>
-    <li><strong style="color: #fff;">Endless Mode:</strong> No move limit, penalties, or warnings. Play indefinitely.</li>
+    <li><strong style="color: #fff;">Controls:</strong> Use ← ↑ → ↓ arrow keys to slide tiles. WASD keys are not supported.</li>
+    <li><strong style="color: #fff;">Objective:</strong> Reach the tile with value 2048 to win. Endless mode lets you play beyond this.</li>
+    <li><strong style="color: #fff;">Normal Tiles:</strong> Merge equal tiles to combine their values (e.g., 4 + 4 → 8).</li>
+    <li><strong style="color: #fff;">Operator Tiles:</strong> Tiles with +, −, ×, ÷ operators that merge with adjacent tiles. Result must be between 2 and 4096.</li>
+    <li><strong style="color: #fff;">Move Limit:</strong> You have 180 moves in normal mode. Exceeding this without reaching the 2048 tile ends the game.</li>
+    <li><strong style="color: #fff;">Minimum Tile Rule:</strong> Every 10 moves, the minimum tile value you must merge increases by 8. Weak merges below this trigger warnings.</li>
+    <li><strong style="color: #fff;">Warnings:</strong> You start with 3 warnings for weak merges. These allow play to continue but alert you.</li>
+    <li><strong style="color: #fff;">Penalties:</strong> If warnings run out and you make a weak merge, you lose 10 moves or get eliminated.</li>
+    <li><strong style="color: #fff;">Bonus Points:</strong> Merge tiles valued ≥ 128 to earn bonus points. Spending 2 bonus points removes a blocking tile.</li>
+    <li><strong style="color: #fff;">Blocking Tiles:</strong> Special tiles that block movement until removed by spending bonus points.</li>
+    <li><strong style="color: #fff;">Endless Mode:</strong> No move limit, warnings, or penalties. Play indefinitely to achieve the highest score.</li>
+    <li><strong style="color: #fff;">Tooltips:</strong> Hover operator tiles to see detailed merge previews and possible targets.</li>
   </ul>
 `;
+
   document.body.appendChild(box);
 
   button.onclick = () => {
-box.classList.toggle('visible');  };
+    box.classList.toggle('visible');
+  };
 }
 export function showFirstTimeOverlay() {
   if (localStorage.getItem('fusionFirstTimePlayed')) return;
@@ -300,4 +303,59 @@ export function showFirstTimeOverlay() {
   });
 
   document.body.appendChild(overlay);
+}
+export function setupBonusPointsCounter() {
+  let bonusCounter = document.getElementById('bonus-points-counter');
+  if (!bonusCounter) {
+    bonusCounter = document.createElement('div');
+    bonusCounter.id = 'bonus-points-counter';
+    bonusCounter.style.position = 'relative';
+    bonusCounter.style.margin = '12px auto 0';
+    bonusCounter.style.width = 'fit-content';
+    bonusCounter.style.padding = '6px 12px';
+    bonusCounter.style.background = '#d0f0d0'; // light green background
+    bonusCounter.style.color = '#2e7d32'; // dark green text
+    bonusCounter.style.fontWeight = 'bold';
+    bonusCounter.style.borderRadius = '6px';
+    bonusCounter.style.boxShadow = '0 1px 6px rgba(0,0,0,0.1)';
+    bonusCounter.style.textAlign = 'center';
+    document.body.appendChild(bonusCounter);
+  }
+  bonusCounter.innerText = `Bonus Points: 0`;
+}
+
+export function updateBonusPoints(value) {
+  const bonusCounter = document.getElementById('bonus-points-counter');
+  if (bonusCounter) {
+    bonusCounter.innerText = `Bonus Points: ${value}`;
+  }
+}
+
+export function showBonusPointsChange(amount) {
+  const bonusCounter = document.getElementById('bonus-points-counter');
+  if (!bonusCounter) return;
+
+  const floatingText = document.createElement('div');
+  floatingText.innerText = (amount > 0 ? '+' : '') + amount;
+  floatingText.style.position = 'absolute';
+  floatingText.style.right = '10px';
+  floatingText.style.top = '-40px';
+  floatingText.style.fontWeight = 'bold';
+  floatingText.style.color = amount > 0 ? '#2e7d32' : '#d32f2f';
+  floatingText.style.fontSize = '22px';
+  floatingText.style.textShadow = '0 0 4px rgba(0,0,0,0.7)';
+  floatingText.style.pointerEvents = 'none';
+  floatingText.style.opacity = '1';
+  floatingText.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
+
+  bonusCounter.appendChild(floatingText);
+
+  requestAnimationFrame(() => {
+    floatingText.style.transform = 'translateY(-40px)';
+    floatingText.style.opacity = '0';
+  });
+
+  floatingText.addEventListener('transitionend', () => {
+    floatingText.remove();
+  });
 }

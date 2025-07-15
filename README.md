@@ -1,6 +1,6 @@
 # 🎮 Fusion Grid
 
-A modern twist on 2048 — featuring arithmetic operations, warnings, move limits, operator tiles, and more.
+A modern twist on 2048 — featuring arithmetic operations, warnings, move limits, operator tiles, blocking tiles, bonus points, and more.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -10,7 +10,7 @@ Play it here: [Fusion Grid on GitHub Pages](https://atac-helicopter.github.io/Fu
 
 ## 🧠 Game Concept
 
-Fusion Grid reimagines 2048 by combining classic sliding mechanics with dynamic operator tiles. Each operator tile (+, −, ×, ÷) merges with a neighbor to create a new result tile. The game adds complexity through move limits, thresholds, warnings, and a planned AI system.
+Fusion Grid reimagines 2048 by combining classic sliding mechanics with dynamic operator tiles. Each operator tile (+, −, ×, ÷) merges with a neighbor to create a new result tile. The game adds complexity through move limits, thresholds, warnings, bonus points, blocking tiles, penalties, and a planned AI system.
 
 ## 🎮 How to Play
 
@@ -49,13 +49,19 @@ Fusion Grid reimagines 2048 by combining classic sliding mechanics with dynamic 
 - Repeated offenses cause elimination (game over).
 - Warnings and penalties are disabled in Endless Mode.
 
+### Bonus Points and Blocking Tiles
+- Merge tiles valued 128 or greater to earn bonus points.
+- Spend 2 bonus points to remove a blocking tile that obstructs movement.
+- Blocking tiles prevent tile movement until removed.
+
 ### Win Condition
-- The player wins by creating a tile with a value between 2048 and 2500 inclusive.
+- The player wins by creating a tile with value exactly 2048.
 - After winning, Endless Mode can be enabled.
 
 ### Endless Mode
-- Disables move limits, warnings, and penalties.
+- Disables move limits, warnings, penalties, and blocking tiles.
 - Can be started from the main menu or after winning.
+- Allows continuous play for high scores.
 
 ## ✨ Features
 
@@ -64,6 +70,7 @@ Fusion Grid reimagines 2048 by combining classic sliding mechanics with dynamic 
 - ✅ Move counter and high score display
 - ✅ Warning system with penalties
 - ✅ Dynamic tile threshold progression
+- ✅ Bonus points and blocking tiles system
 - ✅ Win condition and Endless Mode support
 - ✅ Developer tools preconfigured
 - 🧠 AI autoplay system (coming soon)

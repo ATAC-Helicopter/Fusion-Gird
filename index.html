@@ -39,16 +39,18 @@
     <div id="main-container" style="display: flex; flex-direction: column; align-items: center;">
       <div id="debug-panel" style="margin-bottom: 16px; text-align: left; position: absolute; top: 100px; left: 24px;"></div>
       <div id="game">
-        <div id="score">Score: 0</div>
-        <div id="goal-tracker">
-          <div id="tracker-panel">
-            <div id="move-counter">Moves Left: 0</div>
-            <div id="min-tile">Min Tile: 0</div>
+        <div id="game-container">
+          <div id="score">Score: 0</div>
+          <div id="goal-tracker">
+            <div id="tracker-panel">
+              <div id="move-counter">Moves Left: 0</div>
+              <div id="min-tile">Min Tile: 0</div>
+            </div>
           </div>
+          <div id="grid" class="grid"></div>
+          <div id="op-panel"></div>
+          <div id="merge-log" style="margin-top: 20px; text-align: left;"></div>
         </div>
-        <div id="grid" class="grid"></div>
-        <div id="op-panel"></div>
-        <div id="merge-log" style="margin-top: 20px; text-align: left;"></div>
       </div>
     </div>
   </div>

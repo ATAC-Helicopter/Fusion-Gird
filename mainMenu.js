@@ -1,3 +1,4 @@
+
 import { launchGame } from './game.js';
 
 // === Element References ===
@@ -42,9 +43,7 @@ function applyTheme(mode) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     mode = prefersDark ? 'dark' : 'light';
   }
-
   document.body.dataset.theme = mode;
-
   if (mode === 'dark') {
     document.body.classList.add('theme-dark');
     document.body.classList.remove('theme-light');

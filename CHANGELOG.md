@@ -64,7 +64,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - UI layout refined with repositioned warning panels and enhanced spacing under the game title.  
 - Removed legacy pause menu escape key handling in favor of the rewritten pause system.
 
+
 ### Fixed
 - Pause menu continue button reliably hides pause UI and resumes gameplay.  
 - Fixed light mode OP tile styling and warning counter synchronization.  
 - Added debug logs for pause actions and button clicks, with event binding retry logic for stability.
+
+
+## [1.2.1] - 2025-07-15
+
+### Fixed
+- Fixed "New Game" button unresponsiveness after winning to ensure it restarts the game correctly.  
+- Resolved Endless Mode issue where the win condition triggered on every move; now win triggers are disabled during Endless Mode.  
+- Ensured Endless Mode lose condition only triggers when no moves remain and the grid is full, preventing premature game overs.

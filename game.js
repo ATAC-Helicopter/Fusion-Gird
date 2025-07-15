@@ -133,21 +133,18 @@ function handleInput(e) {
       thresholdCheckEnabled = true;
     }
     // Weak tile elimination logic — merge-grace-period only (no persistent-tile check)
-    if (!inEndlessMode && thresholdCheckEnabled) {
-      const graceMoves = 14 + Math.floor(currentThreshold / 10);
-      for (const tile of tiles) {
-        if (tile.createdAtMove !== undefined) {
-          const age = moveIndex - tile.createdAtMove;
-          if (age > graceMoves && tile.value < tile.mustReachValue) {
-            showEndBanner(`Eliminated — Tile ${tile.value} did not reach ${tile.mustReachValue} in time`, startGame);
-            inputLock = true;
-            return;
-          }
-        }
-      }
-    }
+    if (!inEndlessMode && moveIndex >= moveLimit) {
+  const highest = Math.max(...tiles.map(t => t.value));
+  if (highest < 2048) {
+    showEndBanner('Move Limit Reached', startGame);
+    inputLock = true;
+    return;
   }
 }
+      }
+    }
+  
+
 
 function move(dy, dx) {
   let moved = false;
@@ -487,33 +484,57 @@ function drawTiles() {
 
 
 function checkGameEnd() {
-  if (inEndlessMode) return;
+  // Endless mode: Only lose if grid is full and no valid moves remain. No win triggers.
+  if (inEndlessMode) {
+    const emptyExists = grid.some(t => t === null);
+    if (emptyExists) return;
+    // Try all possible moves
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        const idx = y * gridSize + x;
+        const tile = grid[idx];
+        if (!tile) continue;
+        for (const [dx, dy] of [[0, 1], [1, 0]]) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= gridSize || ny >= gridSize) continue;
+          const neighbor = grid[ny * gridSize + nx];
+          if (!neighbor) return;
+          if (tile.value === neighbor.value) return;
+          if (tile.op || neighbor.op) {
+            if (tryMerge(tile, neighbor) !== null) return;
+          }
+        }
+      }
+    }
+    // No empty spaces and no valid moves: lose in endless mode
+    showEndBanner('Game Over', startGame);
+    inputLock = true;
+    return;
+  }
+  // Normal mode: win and lose conditions
   const winMin = 2048;
-const winMax = 2500;
-const hasWinningTile = tiles.some(t => t.value >= winMin && t.value <= winMax);
-if (hasWinningTile) {
-  showEndBanner('You Win!', startGame);
-  inputLock = true;
-  return;
-}
-
+  const winMax = 2500;
+  const hasWinningTile = tiles.some(t => t.value >= winMin && t.value <= winMax);
+  if (hasWinningTile) {
+    showEndBanner('You Win!', startGame);
+    inputLock = true;
+    return;
+  }
   const emptyExists = grid.some(t => t === null);
   if (emptyExists) return;
-
   // Try all possible moves
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
       const idx = y * gridSize + x;
       const tile = grid[idx];
       if (!tile) continue;
-
       for (const [dx, dy] of [[0, 1], [1, 0]]) {
         const nx = x + dx;
         const ny = y + dy;
         if (nx >= gridSize || ny >= gridSize) continue;
         const neighbor = grid[ny * gridSize + nx];
         if (!neighbor) return;
-
         if (tile.value === neighbor.value) return;
         if (tile.op || neighbor.op) {
           if (tryMerge(tile, neighbor) !== null) return;
@@ -521,8 +542,6 @@ if (hasWinningTile) {
       }
     }
   }
-
-  showEndBanner('Game Over');
   showEndBanner('Game Over', startGame);
   inputLock = true;
 }

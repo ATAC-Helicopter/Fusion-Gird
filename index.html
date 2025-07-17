@@ -16,10 +16,11 @@
   </div>
   <div id="settings-menu" class="menu-screen" style="display: none;">
     <h2>Settings</h2>
-    <label>
-      <input type="checkbox" id="toggle-warnings" checked />
-      Enable Warnings
-    </label>
+    <div style="margin: 20px 0;">
+      <label style="display: block; margin-bottom: 6px;">Difficulty:</label>
+      <input type="range" id="difficulty-select" min="0" max="3" value="1" step="1">
+      <div id="difficulty-label" class="difficulty-lasbel">Medium</div>
+    </div>
     <label>
       <input type="checkbox" id="toggle-move-limit" checked />
       Enable Move Limit
@@ -44,7 +45,6 @@
           <div id="goal-tracker">
             <div id="tracker-panel">
               <div id="move-counter">Moves Left: 0</div>
-              <div id="min-tile">Min Tile: 0</div>
             </div>
           </div>
           <div id="grid" class="grid"></div>
@@ -73,6 +73,16 @@
 <script type="module">
   import { setupInfoBox } from './ui.js';
   setupInfoBox();
+
+  const difficultyNames = ['Easy', 'Medium', 'Hard', 'Very Hard'];
+  const slider = document.getElementById('difficulty-select');
+  const label = document.getElementById('difficulty-label');
+  if (slider && label) {
+    slider.addEventListener('input', () => {
+      label.textContent = difficultyNames[slider.value];
+    });
+  }
+
 </script>
 </body>
 </html>

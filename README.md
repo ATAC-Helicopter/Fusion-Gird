@@ -10,7 +10,16 @@ Play it here: [Fusion Grid on GitHub Pages](https://atac-helicopter.github.io/Fu
 
 ## 🧠 Game Concept
 
-Fusion Grid reimagines 2048 by combining classic sliding mechanics with dynamic operator tiles. Each operator tile (+, −, ×, ÷) merges with a neighbor to create a new result tile. The game adds complexity through move limits, thresholds, warnings, bonus points, blocking tiles, penalties, and a planned AI system.
+Fusion Grid reimagines 2048 by combining classic sliding tile mechanics with arithmetic operators. Operator tiles (`+`, `−`, `×`, `÷`) dynamically interact with number tiles to create new merge outcomes, introducing logical challenges to each move.
+
+The game expands traditional 2048 gameplay by introducing:
+- A difficulty system with distinct move limits (Easy, Medium, Hard, Very Hard)
+- Bonus points earned from strong merges (≥64)
+- Blocking tiles that must be cleared using earned bonus points
+- Smooth animations and visual feedback for merges, spawns, and tile removals
+- Support for endless mode after reaching 2048
+
+Fusion Grid is designed for fast-paced play, strategic tile control, and rewarding visual feedback — all while retaining the intuitive feel of classic 2048.
 
 ## 🎮 How to Play
 
@@ -19,57 +28,51 @@ Fusion Grid reimagines 2048 by combining classic sliding mechanics with dynamic 
 - Reach 2048 to win — or continue in Endless Mode
 
 
-## Game Rules (Updated)
+## 📏 Game Rules
 
-### Operator Merging
-- Operator tiles (`+`, `−`, `×`, `÷`) merge with one adjacent tile in the direction of movement to create a new result tile.
-- Results are calculated as:
-  - `+`: addition
-  - `−`: absolute difference
-  - `×`: multiplication
-  - `÷`: division (only if evenly divisible)
+### Operator Tiles
+- Operator tiles (`+`, `−`, `×`, `÷`) merge with adjacent number tiles using their respective arithmetic operation.
 - Only one merge per tile per move.
-- Weak merges below a dynamic threshold trigger warnings or penalties.
+- Results must remain within valid bounds (2–4096).
 
 ### Tile Spawning
-- New tiles spawn as either 2 (90%) or 4 (10%) in random empty cells.
+- New tiles spawn as 2 (90%) or 4 (10%) in random empty cells.
+- A small percentage of tiles may spawn as operator tiles.
 
-### Movement & Board
+### Movement & Grid
 - Classic 4×4 grid.
-- Tiles move fully in the chosen direction; no diagonal moves or chain reactions.
+- Tiles slide in the direction pressed; merges and animations resolve smoothly.
+- Only one merge per tile per move.
 
-### Move Limit and Progression
-- Players have 180 moves by default (disabled in Endless Mode).
-- The minimum tile value required increases every 10 moves (starting at 8).
-- Failure to reach this threshold within a grace period results in elimination.
+### Move Limit & Difficulty
+- Players start with a move limit that varies by selected difficulty:
+  - Easy: 999 moves
+  - Medium: 300 moves
+  - Hard: 150 moves
+  - Very Hard: 75 moves
+- Endless Mode disables the move limit.
 
-### Warnings and Penalties
-- Weak merges below the threshold issue warnings (up to 3 allowed).
-- After warnings are used, further weak merges reduce the move limit by 10 moves.
-- Repeated offenses cause elimination (game over).
-- Warnings and penalties are disabled in Endless Mode.
-
-### Bonus Points and Blocking Tiles
-- Merge tiles valued 128 or greater to earn bonus points.
-- Spend 2 bonus points to remove a blocking tile that obstructs movement.
-- Blocking tiles prevent tile movement until removed.
+### Bonus Points & Blocking Tiles
+- Merge tiles valued 64 or higher to earn bonus points.
+- Spend 2 bonus points to remove one blocking tile.
+- Blocking tiles cannot move or merge and must be cleared to access blocked space.
+- Blocking tiles appear randomly on some merges.
 
 ### Win Condition
-- The player wins by creating a tile with value exactly 2048.
-- After winning, Endless Mode can be enabled.
+- Reach the 2048 tile to win.
+- Endless Mode can be activated after winning to continue playing.
 
 ### Endless Mode
-- Disables move limits, warnings, penalties, and blocking tiles.
-- Can be started from the main menu or after winning.
-- Allows continuous play for high scores.
+- Disables move limit entirely.
+- Allows infinite progression for high scores.
 
 ## ✨ Features
 
 - ✅ Operator-based merging (+ − × ÷)
 - ✅ Tile tooltips with merge previews
 - ✅ Move counter and high score display
-- ✅ Warning system with penalties
-- ✅ Dynamic tile threshold progression
+- ✅ Bonus point system for large merges
+- ✅ Blocking tile mechanic with visual removal effects
 - ✅ Bonus points and blocking tiles system
 - ✅ Win condition and Endless Mode support
 - ✅ Developer tools preconfigured

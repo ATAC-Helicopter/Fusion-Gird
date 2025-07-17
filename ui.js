@@ -38,9 +38,6 @@ export function setupGameUI(moveLimit = 180, minTileThreshold = 8) {
 
   const moveEl = document.getElementById('move-counter');
   if (moveEl) moveEl.innerText = `Moves Left: ${moveLimit}`;
-
-  const minTileEl = document.getElementById('min-tile');
-  if (minTileEl) minTileEl.innerText = `Min Tile: ${minTileThreshold}`;
 }
 export function updateScoreDisplay(score, highScore) {
   const scoreEl = document.getElementById('score');
@@ -52,63 +49,6 @@ export function updateScoreDisplay(score, highScore) {
   }
 }
 
-export function setupWarningCounter(remaining) {
-  let warningCounter = document.getElementById('warning-counter');
-  if (!warningCounter) {
-    warningCounter = document.createElement('div');
-    warningCounter.id = 'warning-counter';
-    warningCounter.style.position = 'fixed';
-    warningCounter.style.top = '12px';
-    warningCounter.style.right = '12px';
-    warningCounter.style.zIndex = '999';
-    warningCounter.style.padding = '6px 12px';
-    warningCounter.style.borderRadius = '6px';
-    warningCounter.style.background = '#fff3cd';
-    warningCounter.style.color = '#d32f2f';
-    warningCounter.style.fontWeight = 'bold';
-    warningCounter.style.boxShadow = '0 1px 6px rgba(0,0,0,0.1)';
-    document.body.appendChild(warningCounter);
-  }
-  warningCounter.innerText = `Warnings: ${remaining}`;
-}
-
-export function setupWarningMessageArea() {
-  let warningMsg = document.getElementById('warning-msg');
-  if (!warningMsg) {
-    warningMsg = document.createElement('div');
-    warningMsg.id = 'warning-msg';
-    warningMsg.style.position = 'fixed';
-    warningMsg.style.top = '56px';
-    warningMsg.style.right = '12px';
-    warningMsg.style.zIndex = '998';
-    warningMsg.style.display = 'none';
-    warningMsg.style.flexDirection = 'column';
-    warningMsg.style.alignItems = 'flex-end';
-    warningMsg.style.maxWidth = '300px';
-    document.body.appendChild(warningMsg);
-  } else {
-    warningMsg.innerHTML = '';
-    warningMsg.style.display = 'none';
-  }
-}
-
-export function showPenaltyBanner() {
-  const banner = document.createElement('div');
-  banner.innerText = `❗ No warnings left — 10 moves lost`;
-  banner.style.position = 'fixed';
-  banner.style.top = '50%';
-  banner.style.left = '50%';
-  banner.style.transform = 'translate(-50%, -50%)';
-  banner.style.padding = '12px 24px';
-  banner.style.fontSize = '20px';
-  banner.style.background = '#f44336';
-  banner.style.color = '#fff';
-  banner.style.borderRadius = '8px';
-  banner.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-  banner.style.zIndex = '1000';
-  document.body.appendChild(banner);
-  setTimeout(() => banner.remove(), 2500);
-}
 
 export function updateEndlessModeIndicator(enabled) {
   let indicator = document.getElementById('endless-indicator');
@@ -186,7 +126,7 @@ export function showEndBanner(message, startGameCallback) {
     endlessBtn.innerText = 'Endless Mode';
     endlessBtn.onclick = () => {
       document.getElementById('win-lose-banner')?.remove();
-      launchGame({ endlessMode: true, warningsEnabled: false, moveLimitEnabled: false });
+      launchGame({ endlessMode: true, moveLimitEnabled: false });
     };
     styleButton(endlessBtn);
 
@@ -239,8 +179,9 @@ export function setupInfoBox() {
   box.style.left = '60px';
   box.style.transform = 'translateY(-50%)';
   box.style.zIndex = '1000';
-  box.style.background = '#2b2b2b';
-  box.style.border = '1px solid #555';
+  // Removed hardcoded dark theme styles to allow CSS theme inheritance
+  // box.style.background = '#2b2b2b';
+  // box.style.border = '1px solid #555';
   box.style.borderRadius = '20px';
   box.style.padding = '28px';
   box.style.width = '420px';
@@ -249,18 +190,15 @@ export function setupInfoBox() {
 box.innerHTML = `
   <h3 style="margin: 0 0 12px 0; color: #fff; font-size: 20px;">📘 Fusion Grid - Game Rules</h3>
   <ul style="font-size: 16px; line-height: 1.9; padding-left: 18px; color: #ddd;">
-    <li><strong style="color: #fff;">Controls:</strong> Use ← ↑ → ↓ arrow keys to slide tiles. WASD keys are not supported.</li>
-    <li><strong style="color: #fff;">Objective:</strong> Reach the tile with value 2048 to win. Endless mode lets you play beyond this.</li>
+    <li><strong style="color: #fff;">Controls:</strong> Use ← ↑ → ↓ arrow keys to slide tiles.</li>
+    <li><strong style="color: #fff;">Objective:</strong> Reach the 2048 tile to win. You can continue in endless mode after that.</li>
     <li><strong style="color: #fff;">Normal Tiles:</strong> Merge equal tiles to combine their values (e.g., 4 + 4 → 8).</li>
-    <li><strong style="color: #fff;">Operator Tiles:</strong> Tiles with +, −, ×, ÷ operators that merge with adjacent tiles. Result must be between 2 and 4096.</li>
-    <li><strong style="color: #fff;">Move Limit:</strong> You have 180 moves in normal mode. Exceeding this without reaching the 2048 tile ends the game.</li>
-    <li><strong style="color: #fff;">Minimum Tile Rule:</strong> Every 10 moves, the minimum tile value you must merge increases by 8. Weak merges below this trigger warnings.</li>
-    <li><strong style="color: #fff;">Warnings:</strong> You start with 3 warnings for weak merges. These allow play to continue but alert you.</li>
-    <li><strong style="color: #fff;">Penalties:</strong> If warnings run out and you make a weak merge, you lose 10 moves or get eliminated.</li>
-    <li><strong style="color: #fff;">Bonus Points:</strong> Merge tiles valued ≥ 128 to earn bonus points. Spending 2 bonus points removes a blocking tile.</li>
-    <li><strong style="color: #fff;">Blocking Tiles:</strong> Special tiles that block movement until removed by spending bonus points.</li>
-    <li><strong style="color: #fff;">Endless Mode:</strong> No move limit, warnings, or penalties. Play indefinitely to achieve the highest score.</li>
-    <li><strong style="color: #fff;">Tooltips:</strong> Hover operator tiles to see detailed merge previews and possible targets.</li>
+    <li><strong style="color: #fff;">Operator Tiles:</strong> Tiles with +, −, ×, ÷ merge using their operator logic. Result must stay between 2 and 4096.</li>
+    <li><strong style="color: #fff;">Move Limit:</strong> Depends on selected difficulty. When moves reach 0, the game ends unless in endless mode.</li>
+    <li><strong style="color: #fff;">Bonus Points:</strong> Earned by merging tiles of value 64 or higher. 2 bonus points remove a blocking tile.</li>
+    <li><strong style="color: #fff;">Blocking Tiles:</strong> Special tiles that cannot move or merge. Spend bonus points to remove them.</li>
+    <li><strong style="color: #fff;">Endless Mode:</strong> No move limit. Play indefinitely to chase high scores.</li>
+    <li><strong style="color: #fff;">Tooltips:</strong> Hover over operator tiles to preview results and legal targets.</li>
   </ul>
 `;
 

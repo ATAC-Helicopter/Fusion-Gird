@@ -13,12 +13,12 @@
 - Debug enhancements with robust logging and event binding fixes
 - Blocking tiles and Bonus Points system
 - Win condition fixed: reach exactly 2048 tile to win
+- Tile animations for smooth movement and merge effects
+- Responsive UI improvements including modernized difficulty slider and layout fixes
 
 ## 🚧 In Progress
 - AI autoplay: random, smart, pattern-based
 - Base-switching UI
-- Tile animations
-- Responsive UI polish
 
 ## 🧠 Ideas
 - Daily puzzle mode

@@ -1,4 +1,3 @@
-
 import { launchGame } from './game.js';
 
 // === Element References ===
@@ -6,24 +5,24 @@ const startBtn = document.getElementById('start-btn');
 const endlessBtn = document.getElementById('endless-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const settingsBackBtn = document.getElementById('settings-back-btn');
-const toggleWarnings = document.getElementById('toggle-warnings');
 const toggleMoveLimit = document.getElementById('toggle-move-limit');
 const themeSelect = document.getElementById('theme-select');
+const difficultySelect = document.getElementById('difficulty-select');
 
 // === Button Behavior ===
 startBtn.addEventListener('click', () => {
   launchGame({
     endlessMode: false,
-    warningsEnabled: toggleWarnings.checked,
-    moveLimitEnabled: toggleMoveLimit.checked
+    moveLimitEnabled: toggleMoveLimit.checked,
+    moveLimit: getMoveLimitForDifficulty(getDifficultyNameFromSlider(difficultySelect.value))
   });
 });
 
 endlessBtn.addEventListener('click', () => {
   launchGame({
     endlessMode: true,
-    warningsEnabled: toggleWarnings.checked,
-    moveLimitEnabled: toggleMoveLimit.checked
+    moveLimitEnabled: toggleMoveLimit.checked,
+    moveLimit: getMoveLimitForDifficulty(getDifficultyNameFromSlider(difficultySelect.value))
   });
 });
 
@@ -63,3 +62,24 @@ themeSelect.addEventListener('change', () => {
 });
 
 document.getElementById('main-menu').style.display = 'flex';
+
+function getMoveLimitForDifficulty(level) {
+  switch (level) {
+    case 'easy': return 999;
+    case 'medium': return 300;
+    case 'hard': return 150;
+    case 'veryhard': return 75;
+    default: return 300;
+  }
+}
+
+// Map slider value (string/int) to difficulty name
+function getDifficultyNameFromSlider(val) {
+  switch (parseInt(val, 10)) {
+    case 0: return 'easy';
+    case 1: return 'medium';
+    case 2: return 'hard';
+    case 3: return 'veryhard';
+    default: return 'medium';
+  }
+}

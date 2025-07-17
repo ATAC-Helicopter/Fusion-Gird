@@ -1,28 +1,3 @@
-# ## [1.3.0] - 2025-07-15
-#
-# ### Added
-#
-# - Blocking tiles that block movement until removed by spending bonus points.  
-# - Bonus points system earned by merging tiles with value ≥ 128, spendable to remove blocking tiles.  
-# - Info panel (“game key”) with comprehensive rules, controls, and gameplay explanations.  
-# - Responsive grid layout using CSS Grid for better tile alignment and centering on all screen sizes.  
-# - Tooltip system enhancements providing detailed merge previews on operator tiles.  
-# - Full pause menu system rewrite with robust input locking and improved button functionality.  
-#
-# ### Changed
-#
-# - Win condition fixed to reaching exactly tile 2048 (previously a range).  
-# - Warning and penalty system enhanced with a grace period of 3 warnings for weak merges before penalties apply.  
-# - Endless Mode disables warnings, penalties, and blocking tiles for unrestricted play.  
-# - UI/UX improvements for layout consistency, theme support, and visual feedback.  
-#
-# ### Fixed
-#
-# - Pause menu button responsiveness and event binding issues.  
-# - New Game button functionality after winning.  
-# - Endless Mode win/lose condition bugs preventing premature triggers.  
-# - Operator tile styling and tooltip layering issues.  
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -133,3 +108,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - New Game button functionality after winning.  
 - Endless Mode win/lose condition bugs preventing premature triggers.  
 - Operator tile styling and tooltip layering issues.
+
+## [1.4.0] - 2025-07-17
+
+### Added
+
+- Operator tiles now spawn with a 15% chance and apply arithmetic logic to merges.  
+- Bonus points earned by merging tiles ≥ 64; 2 bonus points remove one blocking tile.  
+- Blocking tile removal now features a visual fade-out animation.  
+- Redesigned difficulty system with Easy, Medium, Hard, and Very Hard modes, each with distinct move limits.  
+- Modernized difficulty selector using a slider UI with dynamic label updates.  
+- Fully animated bonus counter that only updates visually when values change.  
+- Complete removal of warning, penalty, and minimum tile systems for streamlined gameplay.  
+- Updated info panel content with modern design, accurate game rules, and theme responsiveness.  
+- Smooth tile movement animations for all moves and merges using persistent tile elements.  
+- Pop-in and glow effect animations when tiles spawn or merge to enhance visual feedback.  
+
+### Changed
+
+- Merged tile and bonus logic optimized and centralized for consistency.  
+- Operator spawn and bonus merge behavior now correctly preserved through all move logic.  
+- UI updated to remove obsolete settings and repurpose layout to accommodate new difficulty system.  
+- Dark and light themes now properly reflect across all info and overlay panels.  
+- Tooltip and game key systems improved with visual and functional polish.  
+- Removed all duplicate definitions of `updateBonusPoints` and unified calls to the animated UI version.  
+- Bonus point award logic moved out of operator tile scope for clarity and consistency.  
+- Tile creation logic refactored to avoid redraw artifacts by keeping DOM elements persistent.  
+
+### Fixed
+
+- Blocking tile spawn location and visual behavior bugs.  
+- Bonus point counter no longer flashes incorrectly or animates on no change.  
+- Difficulty selector now properly reflects game logic settings.  
+- Operator tiles now render reliably in both light and dark mode.  
+- Info panel now respects the current theme and loads correct rule content dynamically.
+
+- Resolved overlapping tile artifacts caused by incorrect tile redraw logic.  
+- Prevented tiles from auto-moving from the top-left corner on spawn; they now appear directly in place.  
+- Prevented unintended duplicate tile spawns by improving spawn timing and placement logic.  
+- Fixed rare animation stutter when multiple merges occurred in sequence.  
+- Resolved score miscalculations caused by early operator clearing during merges.  
+- Eliminated input lag caused by animation lock and early bonus UI updates.  
+- Removed redundant `inputLock` declaration that caused TypeScript block scope errors.  

@@ -2,25 +2,26 @@ import { setupDevModeUI, logEvent } from './devMode.js';
 import {
   setupGameUI,
   updateScoreDisplay,
-  setupWarningCounter,
-  setupWarningMessageArea,
-  showPenaltyBanner,
   updateEndlessModeIndicator,
   ensureTooltipArea,
   showEndBanner,
   showFirstTimeOverlay,
   setupBonusPointsCounter,
-  updateBonusPoints
+  updateBonusPoints as _updateBonusPoints
 } from './ui.js';
 import { tryMerge, applyOp } from './tileUtils.js';
-import { checkScoreForOpPrompt } from './operatorSystem.js';
 // === Game Constants and Config ===
 const gridSize = 4;
 const operations = ['+', '-', '*', '/'];
 
+// === Animation Speed Constants ===
+const tileAnimationSpeed = 60; // in milliseconds
+
 // === Game State ===
 let grid = [];
 let tiles = [];
+// Map to track DOM elements for tiles
+const tileElements = new Map();
 let score = 0;
 let highScore = localStorage.getItem('fusionHighScore') ? parseInt(localStorage.getItem('fusionHighScore')) : 0;
 let largestTile = 0;
@@ -31,16 +32,10 @@ let bonusPoints = 0;
 
 // === Gameplay Settings ===
 let inEndlessMode = false;
-let warningsEnabled = true;
 let moveLimitEnabled = true;
 let moveLimit = 180;
-let minTileThreshold = 8;
 
 // === Gameplay Flags and Trackers ===
-let weakMergeWarningsRemaining = 3;
-let lastWeakMergeTime = 0;
-let thresholdCheckEnabled = false;
-let nextOpThreshold = { value: 100 };
 let inputLock = false;
 
 // === Initialization on Window Load ===
@@ -52,10 +47,9 @@ window.onload = () => {
 };
 
 // === Start a New Game ===
-function startGame({ warningsEnabled: wEnabled = true, moveLimitEnabled: mEnabled = true } = {}) {
-  warningsEnabled = inEndlessMode ? false : wEnabled;
+function startGame({ moveLimitEnabled: mEnabled = true, moveLimit: ml = 180 } = {}) {
   moveLimitEnabled = inEndlessMode ? false : mEnabled;
-  moveLimit = moveLimitEnabled ? 180 : Infinity;
+  moveLimit = inEndlessMode ? Infinity : ml;
 
   // Remove endless mode indicator if present
   const indicator = document.getElementById('endless-indicator');
@@ -68,13 +62,11 @@ function startGame({ warningsEnabled: wEnabled = true, moveLimitEnabled: mEnable
   largestTile = 0;
   moveIndex = 0;
   gameStartMoveIndex = 0;
-  thresholdCheckEnabled = false;
-  weakMergeWarningsRemaining = warningsEnabled ? 3 : 0;
 
   // Bonus points system
   bonusPoints = 0;
   setupBonusPointsCounter();
-  updateBonusPoints(bonusPoints);
+  _updateBonusPoints(bonusPoints);
 
   // Show info box if hidden
   const infoBox = document.getElementById('info-box');
@@ -86,8 +78,6 @@ function startGame({ warningsEnabled: wEnabled = true, moveLimitEnabled: mEnable
 
   // Setup UI and spawn initial tiles
   updateScoreDisplay(0, highScore);
-  setupWarningCounter(weakMergeWarningsRemaining);
-  setupWarningMessageArea();
   updateEndlessModeIndicator(inEndlessMode);
   spawnTile();
   spawnTile();
@@ -108,90 +98,68 @@ function spawnTile() {
   if (grid[index] !== null) return; // ensure it's still empty
 
   const value = Math.random() < 0.9 ? 2 : 4; // classic 2048 behavior
-  const tile = { value, op: null, index };
+  // 15% chance to spawn an operator tile
+  const isOpTile = Math.random() < 0.15;
+  const op = isOpTile ? operations[Math.floor(Math.random() * operations.length)] : null;
+  const tile = {
+    id: crypto.randomUUID(),
+    value,
+    op,
+    index,
+    justSpawned: true
+  };
   grid[index] = tile;
   tiles.push(tile);
   if (value > largestTile) largestTile = value;
   const row = Math.floor(index / gridSize);
   const col = index % gridSize;
-  logEvent(`[SPAWN] Spawned ${value} at index ${index} (row: ${row}, col: ${col})`);
+  logEvent(`[SPAWN] Spawned ${value}${op ? " (" + op + ")" : ""} at index ${index} (row: ${row}, col: ${col})`);
+
+  // Draw tiles immediately (no delay)
+  drawTiles();
 }
 
 function handleInput(e) {
-  // Ignore input if locked or end banner shown
-  if (inputLock || document.getElementById('win-lose-banner')) return;
+  if (document.getElementById('win-lose-banner')) return;
 
-  // Only handle arrow keys
   const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
   if (!keys.includes(e.key)) return;
   e.preventDefault();
 
-  // Map keys to moves
+  if (inputLock) return;
+
+  processInput(e.key);
+}
+
+function processInput(key) {
   let moved = false;
-  switch (e.key) {
-    case 'ArrowLeft':
-      moved = move(0, -1);
-      break;
-    case 'ArrowRight':
-      moved = move(0, 1);
-      break;
-    case 'ArrowUp':
-      moved = move(-1, 0);
-      break;
-    case 'ArrowDown':
-      moved = move(1, 0);
-      break;
+  switch (key) {
+    case 'ArrowLeft': moved = move(0, -1); break;
+    case 'ArrowRight': moved = move(0, 1); break;
+    case 'ArrowUp': moved = move(-1, 0); break;
+    case 'ArrowDown': moved = move(1, 0); break;
   }
 
-  // No move made: exit early
   if (!moved) return;
 
+  inputLock = true;
+  inputLock = false;
   console.log(`\n=== MOVE ${++moveIndex} ===`);
 
-  // Move limit check (non-endless)
-  if (!inEndlessMode && moveIndex >= moveLimit) {
-    const highest = Math.max(...tiles.map(t => t.value));
-    if (highest < 2048) {
-      showEndBanner('Move Limit Reached', startGame);
-      inputLock = true;
-      return;
-    }
+  const highest = Math.max(...tiles.map(t => t.value));
+  if (!inEndlessMode && moveIndex >= moveLimit && highest < 2048) {
+    showEndBanner('Move Limit Reached', startGame);
+    inputLock = true;
+    return;
   }
 
-  // Lock input during processing
-  inputLock = true;
-
-  // Spawn a new tile
-  spawnTile();
-
-  // Check operator prompt and update
-  checkScoreForOpPrompt(tiles, score, nextOpThreshold, operations, grid, gridSize);
-
-  // Redraw tiles
-  drawTiles();
-
-  // Log largest tile
-  logEvent(`[INFO] Largest tile: ${largestTile}`);
-
-  // Release input lock after debounce delay
   setTimeout(() => {
-    inputLock = false;
-  }, 80);
+    spawnTile();
+    logEvent(`[INFO] Largest tile: ${largestTile}`);
+    checkGameEnd();
+  }, tileAnimationSpeed);
 
-  // Check if game ended
-  checkGameEnd();
-
-  // Update threshold tracking
-  const thresholdInterval = 10;
-  const currentThreshold = minTileThreshold + Math.floor(moveIndex / thresholdInterval) * 8;
-  const metThreshold = tiles.some(t => t.value >= currentThreshold);
-  if (!thresholdCheckEnabled && metThreshold) {
-    thresholdCheckEnabled = true;
-  }
-
-  // Weak tile elimination check (again)
   if (!inEndlessMode && moveIndex >= moveLimit) {
-    const highest = Math.max(...tiles.map(t => t.value));
     if (highest < 2048) {
       showEndBanner('Move Limit Reached', startGame);
       inputLock = true;
@@ -230,55 +198,12 @@ function move(dy, dx) {
         } else {
           if (tile.blocking || target.blocking) break;
           const result = tryMerge(tile, target);
-          const mergedBySubOrDiv = (tile.op === '-' || tile.op === '/');
-
-          const currentMinThreshold = minTileThreshold + Math.floor(moveIndex / 10) * 8;
-
-if (
-  warningsEnabled &&
-  moveLimitEnabled &&
-  !inEndlessMode &&
-  mergedBySubOrDiv &&
-  (typeof result !== 'number' || result < currentMinThreshold)
-) {
-  const shown = typeof result === 'number' ? result : 'invalid';
-
-  if (weakMergeWarningsRemaining > 0) {
-    if ((moveIndex - lastWeakMergeTime > 3)) {
-      weakMergeWarningsRemaining--;
-      lastWeakMergeTime = moveIndex;
-
-      const warningMsg = document.getElementById('warning-msg');
-      if (warningMsg) {
-        const warningLine = document.createElement('div');
-        warningLine.style.background = '#fff3cd';
-        warningLine.style.borderRadius = '6px';
-        warningLine.style.padding = '6px 12px';
-        warningLine.style.marginTop = '6px';
-        warningLine.style.color = '#d32f2f';
-        warningLine.style.fontSize = '14px';
-        warningLine.style.fontWeight = '500';
-        warningLine.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-        warningLine.innerHTML = `⚠️ Weak merge – result ${shown} is below minimum ${currentMinThreshold}`;
-        warningMsg.appendChild(warningLine);
-        warningMsg.style.display = 'block';
-      }
-    } // else: grace cooldown is in effect, but no penalty yet
-  } else {
-    if (!tile.penalized) {
-      moveLimit -= 10;
-      tile.penalized = true;
-      showPenaltyBanner();
-    } else {
-      showEndBanner(`Eliminated — Resulting tile too weak (${shown} < min)`, startGame);
-      inputLock = true;
-      return false;
-    }
-  }
-}
           if (result !== null) {
             const mergeValue = typeof result === 'object' ? result.value : result;
             const isBlocking = typeof result === 'object' && result.blocking;
+
+            // Capture tile.op before clearing for scoring logic
+            const originalOp = tile.op;
 
             tile.value = isBlocking ? 0 : mergeValue;
             tile.op = null;
@@ -290,16 +215,27 @@ if (
               delete tile.blocking;
             }
 
-            // Remove weak tile tracking after merge
-            delete tile.createdAtMove;
-            delete tile.mustReachValue;
             grid[ny * gridSize + nx] = null;
             grid[ty * gridSize + tx] = tile;
             tile.index = ty * gridSize + tx;
-            tiles = tiles.filter(t => t !== target);
+            // Animation: set justMerged flag for merge
+            tile.justMerged = true;
+            // Delay removal of target tile for animation
+            const targetId = target.id;
+            // Hide the merged-away tile immediately
+            const targetEl = tileElements.get(targetId);
+            if (targetEl) {
+              targetEl.style.opacity = '0';
+            }
+            drawTiles(); // show the overlap frame
+            setTimeout(() => {
+              tiles = tiles.filter(t => t.id !== targetId);
+              drawTiles(); // redraw without merged tile
+            }, tileAnimationSpeed); // match animation duration
             moved = true;
 
-            if (tile.op === '-' || tile.op === '/') {
+            // Use originalOp for scoring logic
+            if (originalOp === '-' || originalOp === '/') {
               score -= mergeValue;
               if (score < 0) score = 0;
             } else {
@@ -310,23 +246,10 @@ if (
             logEvent(`[MERGE] Merged tiles to ${mergeValue}${isBlocking ? ' (blocking)' : ''} at index ${ty * gridSize + tx}`);
 
             // Bonus points system
-            if (!isBlocking && mergeValue >= 128) {
+            if (!isBlocking && mergeValue >= 64) {
               bonusPoints++;
-              updateBonusPoints(bonusPoints);
+              _updateBonusPoints(bonusPoints);
               showBonusPointsChange(+1);
-
-              if (bonusPoints >= 2) {
-                const blockingTileIndex = tiles.findIndex(t => t.blocking);
-                if (blockingTileIndex !== -1) {
-                  const blockingTile = tiles[blockingTileIndex];
-                  grid[blockingTile.index] = null;
-                  tiles.splice(blockingTileIndex, 1);
-                  drawTiles();
-                  bonusPoints -= 2;
-                  updateBonusPoints(bonusPoints);
-                  showBonusPointsChange(-2);
-                }
-              }
             }
           }
           break;
@@ -335,17 +258,21 @@ if (
     }
   }
 
+  tryConsumeBonusForUnblock();
   return moved;
 }
 
 
 function drawTiles() {
   const gridEl = document.getElementById('grid');
-  gridEl.innerHTML = '';
+  // gridEl.innerHTML = '';
   const tileSize = 80;
   const gap = 8;
 
   // Render background grid tiles
+  // These are static and can be cleared/re-added, but leave main grid contents persistent
+  // Remove previous backgrounds
+  Array.from(gridEl.querySelectorAll('.background-tile')).forEach(el => el.remove());
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
       const bg = document.createElement('div');
@@ -359,24 +286,63 @@ function drawTiles() {
     }
   }
 
+  // Track which tiles are present after this draw
+  const existingTiles = new Set();
+
   for (let tile of tiles) {
-    const div = document.createElement('div');
-    const x = tile.index % gridSize;
-    const y = Math.floor(tile.index / gridSize);
+    existingTiles.add(tile.id);
+    let div = tileElements.get(tile.id);
+    const tileIndex = grid.findIndex(t => t === tile);
+    const x = tileIndex % gridSize;
+    const y = Math.floor(tileIndex / gridSize);
+    let isNew = false;
+    // If DOM element doesn't exist, create and add to grid
+    if (!div) {
+      div = document.createElement('div');
+      tileElements.set(tile.id, div);
+      const transform = `translate(${x * (tileSize + gap)}px, ${y * (tileSize + gap)}px)`;
+      // Set transform and transition BEFORE any class/appends
+      div.style.transform = transform;
+      div.style.transition = 'none';
+      div.classList.value = 'tile';
+      gridEl.appendChild(div);
+      isNew = true;
+    } else {
+      // For existing tile, update transform and transition BEFORE class changes
+      const transform = `translate(${x * (tileSize + gap)}px, ${y * (tileSize + gap)}px)`;
+      div.style.transform = transform;
+      div.style.transition = `transform ${tileAnimationSpeed}ms ease-out`;
+    }
+    // Remove all classes except 'tile'
     div.className = 'tile';
+    div.innerHTML = '';
+    div.style.position = 'absolute';
+    div.style.width = `${tileSize}px`;
+    div.style.height = `${tileSize}px`;
+    div.style.lineHeight = `${tileSize}px`;
+    div.style.textAlign = 'center';
+    div.style.fontSize = '24px';
+    // Set z-index for stacking order
+    div.style.zIndex = 10 + tile.value;
     if (tile.blocking) {
       div.classList.add('blocking');
       div.innerText = '❌';
       tile.op = null;
-      div.style.position = 'absolute';
-      div.style.left = `${x * (tileSize + gap)}px`;
-      div.style.top = `${y * (tileSize + gap)}px`;
-      gridEl.appendChild(div);
       continue; // Skip normal tile rendering
     }
     const tileClass = 'tile-' + tile.value;
     div.classList.add(tileClass);
-
+    // --- Begin: wrap tile contents in .tile-inner and apply tile-spawn there ---
+    const inner = document.createElement('div');
+    inner.classList.add('tile-inner');
+    if (tile.justSpawned) {
+      inner.classList.add('tile-spawn');
+      tile.justSpawned = false;
+    }
+    if (tile.justMerged) {
+      inner.classList.add('tile-merge');
+      tile.justMerged = false;
+    }
     if (tile.op) {
       div.classList.add('tile-op');
       const opClass = tile.op === '+' ? 'add' :
@@ -390,7 +356,7 @@ function drawTiles() {
       const number = document.createElement('div');
       number.className = 'tile-number';
       number.innerText = tile.value;
-      div.appendChild(number);
+      inner.appendChild(number);
 
       const badge = document.createElement('div');
       badge.className = 'op-badge';
@@ -405,150 +371,25 @@ function drawTiles() {
       badge.style.fontWeight = 'bold';
       badge.style.textShadow = '0 0 3px rgba(0,0,0,0.4)';
       badge.style.color = '#000';
-      div.appendChild(badge);
-
-      let wrapper;
-      let tooltip;
-      if (tile.previewOp) {
-        wrapper = document.createElement('div');
-        wrapper.className = 'tile-wrapper has-tooltip tile-op';
-        wrapper.style.position = 'absolute';
-        wrapper.style.zIndex = '20';
-        wrapper.style.width = `${tileSize}px`;
-        wrapper.style.height = `${tileSize}px`;
-        wrapper.style.left = `${x * (tileSize + gap)}px`;
-        wrapper.style.top = `${y * (tileSize + gap)}px`;
-        // Remove transform property if present
-        wrapper.style.transform = '';
-
-        div.style.position = 'absolute';
-        div.style.top = '0';
-        div.style.left = '0';
-
-        tooltip = document.createElement('div');
-        tooltip.className = 'tile-tooltip';
-        tooltip.innerHTML = tile.previewOp
-          .split('\n')
-          .map(op => `<div class="tooltip-line">${op}</div>`)
-          .join('');
-        tooltip.style.whiteSpace = 'nowrap';
-        tooltip.style.display = 'none';
-        tooltip.style.flexDirection = 'column';
-        tooltip.style.alignItems = 'flex-start';
-
-        // Tooltip positioning and z-index to ensure visibility above all UI elements
-        tooltip.style.position = 'absolute';
-        tooltip.style.zIndex = '3001'; // Ensure it's above all other UI elements
-        tooltip.style.top = '100%';
-        tooltip.style.left = '0';
-        tooltip.style.marginLeft = '0';
-        tooltip.style.marginTop = '12px';
-        // tooltip.style.top = '-10px';
-        // tooltip.style.left = '100%';
-        // tooltip.style.marginLeft = '12px';
-
-        tooltip.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
-        tooltip.style.backdropFilter = 'blur(6px)';
-        tooltip.style.color = '#111';
-        tooltip.style.padding = '10px 16px';
-        tooltip.style.borderRadius = '12px';
-        tooltip.style.border = '1px solid rgba(0,0,0,0.15)';
-        tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-        tooltip.style.fontSize = '15px';
-        tooltip.style.fontWeight = '600';
-        tooltip.style.lineHeight = '1.6';
-        tooltip.style.fontFamily = 'monospace';
-        // (removed tooltip.style.zIndex = '3000';)
-      } else {
-        wrapper = document.createElement('div');
-        wrapper.className = 'tile-wrapper tile-op';
-        wrapper.style.position = 'absolute';
-        wrapper.style.zIndex = '20';
-        wrapper.style.width = `${tileSize}px`;
-        wrapper.style.height = `${tileSize}px`;
-        wrapper.style.left = `${x * (tileSize + gap)}px`;
-        wrapper.style.top = `${y * (tileSize + gap)}px`;
-        // Remove transform property if present
-        wrapper.style.transform = '';
-
-        div.style.position = 'absolute';
-        div.style.top = '0';
-        div.style.left = '0';
-      }
-
-      wrapper.onmouseenter = () => {
-        const tooltipArea = document.getElementById('tooltip-area');
-        tooltipArea.innerHTML = '';
-        // Move tooltip positioning and visibility logic after clearing innerHTML
-        if (tooltip) {
-          tooltipArea.appendChild(tooltip);
-          tooltip.style.display = 'block';
-          tooltipArea.style.display = 'block';
-          tooltipArea.style.zIndex = '3002'; // Ensure above warnings
-        } else {
-          tooltipArea.style.display = 'none';
-        }
-
-        // Highlight target tiles
-        const targetX = tile.index % gridSize;
-        const targetY = Math.floor(tile.index / gridSize);
-        const directions = [
-          [0, -1], [0, 1], [-1, 0], [1, 0]
-        ];
-
-        for (const [dx, dy] of directions) {
-          const nx = targetX + dx;
-          const ny = targetY + dy;
-          if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
-            const neighborIndex = ny * gridSize + nx;
-            const neighbor = grid[neighborIndex];
-            if (neighbor && neighbor !== tile && !neighbor.op) {
-              const result = applyOp(tile.value, neighbor.value, tile.op);
-              if (result !== null) {
-                const tileDiv = [...gridEl.children].find(child => {
-                  const isWrapper = child.classList.contains('tile-wrapper');
-                  if (!isWrapper || child.classList.contains('background-tile')) return false;
-                  const left = parseInt(child.style.left);
-                  const top = parseInt(child.style.top);
-                  return left === nx * (tileSize + gap) && top === ny * (tileSize + gap);
-                });
-                if (tileDiv) tileDiv.classList.add('tile-highlight');
-              }
-            }
-          }
-        }
-      };
-
-      wrapper.onmouseleave = () => {
-        const tooltipArea = document.getElementById('tooltip-area');
-        tooltipArea.style.display = 'none';
-        if (tooltip) tooltip.style.display = 'none';
-        document.querySelectorAll('.tile-highlight').forEach(el => el.classList.remove('tile-highlight'));
-      };
-
-      wrapper.appendChild(div);
-      gridEl.appendChild(wrapper);
-
-      // If previewOp exists, ensure tooltip area is visible after appending tooltip
-      if (tile.previewOp) {
-        const tooltipArea = document.getElementById('tooltip-area');
-        tooltipArea.style.display = 'block';
-      }
+      inner.appendChild(badge);
+      // Tooltip hover logic removed for now
     } else {
-      div.innerText = tile.value;
-      div.style.position = 'absolute';
-      div.style.width = `${tileSize}px`;
-      div.style.height = `${tileSize}px`;
-      div.style.lineHeight = `${tileSize}px`;
-      div.style.textAlign = 'center';
-      div.style.fontSize = '24px';
-      div.style.left = `${x * (tileSize + gap)}px`;
-      div.style.top = `${y * (tileSize + gap)}px`;
-      div.style.position = 'absolute';
-      div.style.transform = '';
-      gridEl.appendChild(div);
+      inner.innerText = tile.value;
     }
+    div.appendChild(inner);
+    // --- End: .tile-inner wrapping and animation ---
+    // No need for separate transition handling for isNew; handled above
+  }
 
+  // Remove orphaned DOM elements
+  for (const [id, el] of tileElements.entries()) {
+    if (!existingTiles.has(id)) {
+      el.classList.add('tile-remove'); // Add fade-out CSS class (to be defined in CSS)
+      setTimeout(() => {
+        el.remove();
+        tileElements.delete(id);
+      }, 200); // Wait for animation to finish
+    }
   }
 
   // Update high score if necessary and update score display
@@ -559,15 +400,8 @@ function drawTiles() {
   updateScoreDisplay(score, highScore);
   // Update goal tracker values
   const moveEl = document.getElementById('move-counter');
-  const minTileEl = document.getElementById('min-tile');
-  const thresholdInterval = 10;
-  const currentThreshold = minTileThreshold + Math.floor(moveIndex / thresholdInterval) * 8;
   if (moveEl) moveEl.innerText = `Moves Left: ${moveLimit - moveIndex}`;
-  if (minTileEl) minTileEl.innerText = `Min Tile: ${currentThreshold}`;
 
-  // Update floating warning counter
-  const warningCounter = document.getElementById('warning-counter');
-  if (warningCounter) warningCounter.innerText = `⚠️ Warnings Left: ${weakMergeWarningsRemaining}`;
   // If in Endless Mode, update indicator to append warning count
   updateEndlessModeIndicator(inEndlessMode);
 
@@ -648,13 +482,40 @@ function checkGameEnd() {
   inputLock = true;
 }
 
-export function launchGame({ endlessMode = false, warningsEnabled = true, moveLimitEnabled = true } = {}) {
+export function launchGame({ endlessMode = false, moveLimitEnabled = true, moveLimit: customMoveLimit = 180 } = {}) {
   inEndlessMode = endlessMode;
   document.getElementById('main-menu').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  startGame({ warningsEnabled, moveLimitEnabled });
+  startGame({ moveLimitEnabled, moveLimit: customMoveLimit });
 }
 
 export function setInputLock(state) {
   inputLock = state;
+}
+// === Bonus: Try to consume bonus points to remove blocking tiles ===
+function tryConsumeBonusForUnblock() {
+  if (bonusPoints >= 2) {
+    const blockingTileIndex = tiles.findIndex(t => t.blocking);
+    if (blockingTileIndex === -1) return;
+
+    const blockingTile = tiles[blockingTileIndex];
+    grid[blockingTile.index] = null;
+    tiles.splice(blockingTileIndex, 1);
+    bonusPoints -= 2;
+    _updateBonusPoints(bonusPoints);
+    showBonusPointsChange(-2);
+    // Animation for removing the blocking tile
+    const div = tileElements.get(blockingTile.id);
+    if (div) {
+      div.classList.add('blocker-removal');
+      setTimeout(() => {
+        div.remove();
+        tileElements.delete(blockingTile.id);
+        drawTiles(); // Redraw after animation completes
+      }, 300);
+    } else {
+      drawTiles(); // fallback if div is not found
+    }
+    logEvent(`[BONUS] Removed blocking tile at index ${blockingTile.index}`);
+  }
 }

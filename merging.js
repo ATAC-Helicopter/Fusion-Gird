@@ -31,9 +31,9 @@ export function tryMergeInDirection(grid, tiles, dx, dy, gridSize, scoreRef, lar
         if (!targetTile || tile === targetTile) continue;
         if (targetTile.blocking) continue;
 
-        // Attempt merge if valid and target not merged yet
+        // Attempt merge if valid and neither source nor target have merged yet
         const result = tryMerge(tile, targetTile);
-        if (result !== null && !moved.has(targetIndex)) {
+        if (result !== null && !moved.has(index) && !moved.has(targetIndex)) {
           const isBlocking = typeof result === 'object' && result.blocking;
           const mergeValue = typeof result === 'object' ? result.value : result;
 
@@ -59,6 +59,7 @@ export function tryMergeInDirection(grid, tiles, dx, dy, gridSize, scoreRef, lar
           if (mergeValue > largestTileRef.value) largestTileRef.value = mergeValue;
 
           moved.add(targetIndex);
+          moved.add(index);
           merged = true;
         }
       }

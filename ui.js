@@ -188,19 +188,19 @@ export function setupInfoBox() {
   box.style.boxShadow = '0 6px 14px rgba(0,0,0,0.4)';
   box.style.display = 'none';
 box.innerHTML = `
-  <h3 style="margin: 0 0 12px 0; color: #fff; font-size: 20px;">📘 Fusion Grid - Game Rules</h3>
-  <ul style="font-size: 16px; line-height: 1.9; padding-left: 18px; color: #ddd;">
-    <li><strong style="color: #fff;">Controls:</strong> Use ← ↑ → ↓ arrow keys to slide tiles.</li>
-    <li><strong style="color: #fff;">Objective:</strong> Reach the 2048 tile to win. You can continue in endless mode after that.</li>
-    <li><strong style="color: #fff;">Normal Tiles:</strong> Merge equal tiles to combine their values (e.g., 4 + 4 → 8).</li>
-    <li><strong style="color: #fff;">Operator Tiles:</strong> Tiles with +, −, ×, ÷ merge using their operator logic. Result must stay between 2 and 4096.</li>
-    <li><strong style="color: #fff;">Move Limit:</strong> Depends on selected difficulty. When moves reach 0, the game ends unless in endless mode.</li>
-    <li><strong style="color: #fff;">Bonus Points:</strong> Earned by merging tiles of value 64 or higher. 2 bonus points remove a blocking tile.</li>
-    <li><strong style="color: #fff;">Blocking Tiles:</strong> Special tiles that cannot move or merge. Spend bonus points to remove them.</li>
-    <li><strong style="color: #fff;">Endless Mode:</strong> No move limit. Play indefinitely to chase high scores.</li>
-    <li><strong style="color: #fff;">Tooltips:</strong> Hover over operator tiles to preview results and legal targets.</li>
-  </ul>
-`;
+    <h3 style="margin: 0 0 12px 0; color: #fff; font-size: 20px;">📘 Fusion Grid - Game Rules</h3>
+    <ul style="font-size: 16px; line-height: 1.9; padding-left: 18px; color: #ddd;">
+      <li><strong style="color: #fff;">Controls:</strong> Use ← ↑ → ↓ arrow keys to slide tiles.</li>
+      <li><strong style="color: #fff;">Objective:</strong> Reach the 2048 tile to win. Endless Mode unlocks after victory.</li>
+      <li><strong style="color: #fff;">Normal Tiles:</strong> Merge equal tiles to double their value.</li>
+      <li><strong style="color: #fff;">Operator Tiles:</strong> Tiles with +, −, ×, ÷ combine adjacent values using math. Only results that are powers of 2 are valid.</li>
+      <li><strong style="color: #fff;">Blocking Tiles:</strong> Created from invalid merges. They can't be moved or merged.</li>
+      <li><strong style="color: #fff;">Division:</strong> Only allowed when both values are greater than 1 and divide cleanly. No ÷0 or ÷1.</li>
+      <li><strong style="color: #fff;">Move Limit:</strong> Based on difficulty. Use Endless Mode for unlimited play.</li>
+      <li><strong style="color: #fff;">Bonus Points:</strong> Earned from merges ≥64. Spend 2 points to clear a blocking tile.</li>
+      <li><strong style="color: #fff;">Tooltips:</strong> Hover over operator tiles to preview possible results.</li>
+    </ul>
+  `;
 
   document.body.appendChild(box);
 
@@ -224,15 +224,18 @@ export function showFirstTimeOverlay() {
   overlay.style.flexDirection = 'column';
   overlay.style.justifyContent = 'center';
   overlay.style.alignItems = 'center';
-  overlay.style.zIndex = '2000';
   overlay.style.textAlign = 'center';
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0'; // ensures full viewport fill
   overlay.style.fontSize = '20px';
   overlay.style.padding = '40px';
 
   overlay.innerHTML = `
-    <h2 style="margin-bottom: 20px;">Welcome to Fusion Grid!</h2>
-    <p style="max-width: 500px;">Use the ← ↑ → ↓ arrow keys to slide tiles and combine them using math! Reach the target tile to win.</p>
-    <p style="margin-top: 24px; font-size: 16px; color: #ccc;">Click anywhere to start.</p>
+    <div style="max-width: 600px; padding: 32px; background: rgba(0,0,0,0.7); border-radius: 12px;">
+      <h2 style="margin-bottom: 20px;">Welcome to Fusion Grid!</h2>
+      <p style="font-size: 18px;">Use the ← ↑ → ↓ arrow keys to slide tiles and combine them using math! Reach the 2048 tile to win.</p>
+      <p style="margin-top: 24px; font-size: 14px; color: #ccc;">Click anywhere to begin.</p>
+    </div>
   `;
 
   overlay.addEventListener('click', () => {

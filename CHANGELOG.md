@@ -149,4 +149,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Fixed rare animation stutter when multiple merges occurred in sequence.  
 - Resolved score miscalculations caused by early operator clearing during merges.  
 - Eliminated input lag caused by animation lock and early bonus UI updates.  
-- Removed redundant `inputLock` declaration that caused TypeScript block scope errors.  
+- Removed redundant `inputLock` declaration that caused TypeScript block scope errors.
+
+## [1.4.1] - 2025-07-19
+
+### Fixed
+
+- Prevented tiles from merging more than once per move, ensuring consistency with classic 2048 rules.
+- Fixed division logic to disallow divide-by-zero and divide-by-one operations.
+- Resolved inconsistencies where operator merges created unexpected results due to unrestricted operands.
+- Corrected merge behavior to clamp operator results within the valid power-of-two range only.
+- First-time overlay is now properly centered on all screen sizes.
+- Updated tutorial message and help/info panel to reflect correct rules for operator tiles and blocking behavior.
+- Improved info box and tooltip clarity for all operator and special tile explanations.

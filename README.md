@@ -32,17 +32,19 @@ Fusion Grid is designed for fast-paced play, strategic tile control, and rewardi
 
 ### Operator Tiles
 - Operator tiles (`+`, `−`, `×`, `÷`) merge with adjacent number tiles using their respective arithmetic operation.
-- Only one merge per tile per move.
-- Results must remain within valid bounds (2–4096).
+- A merge only succeeds if the result is a **power of 2** (2, 4, 8, 16, ... up to 4096).
+- Invalid results (e.g., 3 + 5 = 8 ✅, but 3 + 4 = 7 ❌) create a **blocking tile** (❌) which cannot move or merge.
+- Division only works if both numbers are greater than 1 and the result divides evenly (no division by 0 or 1 allowed).
 
 ### Tile Spawning
 - New tiles spawn as 2 (90%) or 4 (10%) in random empty cells.
-- A small percentage of tiles may spawn as operator tiles.
+- Some tiles may randomly receive operators based on chance and game state.
 
 ### Movement & Grid
 - Classic 4×4 grid.
-- Tiles slide in the direction pressed; merges and animations resolve smoothly.
-- Only one merge per tile per move.
+- Slide tiles using arrow keys (← ↑ → ↓).
+- Tiles slide and merge only once per move, in the direction pressed.
+- Movement is blocked by blocking tiles.
 
 ### Move Limit & Difficulty
 - Players start with a move limit that varies by selected difficulty:
@@ -53,18 +55,18 @@ Fusion Grid is designed for fast-paced play, strategic tile control, and rewardi
 - Endless Mode disables the move limit.
 
 ### Bonus Points & Blocking Tiles
-- Merge tiles valued 64 or higher to earn bonus points.
-- Spend 2 bonus points to remove one blocking tile.
-- Blocking tiles cannot move or merge and must be cleared to access blocked space.
-- Blocking tiles appear randomly on some merges.
+- Merges with values ≥64 award bonus points.
+- Spend 2 bonus points to remove a blocking tile (❌).
+- Blocking tiles are created from invalid merges and cannot be moved or merged.
+- If a tile is trapped between blockers, it must be freed by the player.
 
 ### Win Condition
 - Reach the 2048 tile to win.
-- Endless Mode can be activated after winning to continue playing.
+- Endless Mode unlocks after winning to allow continued play.
 
 ### Endless Mode
-- Disables move limit entirely.
-- Allows infinite progression for high scores.
+- Disables the move limit.
+- Allows infinite progression and high score chasing.
 
 ## ✨ Features
 

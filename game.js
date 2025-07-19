@@ -490,7 +490,7 @@ export function launchGame({ endlessMode = false, moveLimitEnabled = true, moveL
 }
 
 export function setInputLock(state) {
-  inputLock = state;
+  inputLock = state;  
 }
 // === Bonus: Try to consume bonus points to remove blocking tiles ===
 function tryConsumeBonusForUnblock() {
